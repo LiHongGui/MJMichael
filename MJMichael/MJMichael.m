@@ -7,7 +7,20 @@
 //
 
 #import "MJMichael.h"
+#import "AFNetworking.h"
+#import "WSProgressHUD.h"
+#import "MJExtension.h"
+#import "MJRefresh.h"
+#import "TZImagePickerController.h"
+
 #define kUIScreen [UIScreen mainScreen].bounds
+#ifdef DEBUG
+#define XLog(...) NSLog(__VA_ARGS__)
+#else
+#define XLog(...)
+#endif
+#define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
+
 @implementation MJMichael
 
 #pragma mark-:*判断null,nil
@@ -867,11 +880,8 @@
     return attrStr;
 }
 @end
-
-#import "MJRefreshHF.h"
 @interface MJRefreshHF()
-@property(nonatomic,strong) MJRefreshNormalHeader *normalHeader;
-@property(nonatomic,strong) MJRefreshAutoNormalFooter *normalFooter;
+
 @end
 @implementation MJRefreshHF
 +(MJRefreshHF *)mjManager
@@ -1001,7 +1011,6 @@
     return [[NSAttributedString alloc] initWithString:title attributes:attributes];
 }
 @end
-#import "TZImagePickerController.h"
 @interface MJUpdateImageVideo()<UINavigationControllerDelegate,UINavigationControllerDelegate,UIImagePickerControllerDelegate,UINavigationBarDelegate,TZImagePickerControllerDelegate>
 @property(nonatomic,strong) UIImage *image;
 @property(nonatomic,strong) NSData *imageData;
@@ -1031,8 +1040,8 @@
     [imagePickerVc setUiImagePickerControllerSettingBlock:^(UIImagePickerController *imagePickerController) {
         imagePickerController.videoQuality = UIImagePickerControllerQualityTypeHigh;
     }];
-    [imagePickerVc.navigationBar setBackgroundImage:[ImageColorHelper createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)] forBarMetrics:UIBarMetricsDefault];
-    imagePickerVc.navigationBar.shadowImage = [ImageColorHelper createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)];
+    [imagePickerVc.navigationBar setBackgroundImage:[MJMichael createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)] forBarMetrics:UIBarMetricsDefault];
+    imagePickerVc.navigationBar.shadowImage = [MJMichael createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)];
     imagePickerVc.iconThemeColor = [UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1];
     imagePickerVc.showPhotoCannotSelectLayer = YES;
     imagePickerVc.cannotSelectLayerColor = [[UIColor whiteColor] colorWithAlphaComponent:0.8];
@@ -1229,7 +1238,6 @@
     return [emailTest evaluateWithObject:email];
 }
 @end
-#import "TimeHelper.h"
 @interface TimeHelper()
 @property (nonatomic,assign)YMDMS yMinDMSStyle;
 
@@ -1666,9 +1674,6 @@
 }
 
 @end
-#import "UserDefaultsHelper.h"
-#import "LogInOrOutVC.h"
-#import "MainNavC.h"
 @interface UserDefaultsHelper()
 @end
 @implementation UserDefaultsHelper
@@ -1688,11 +1693,11 @@
 }
 +(void)presentVC:(UIViewController *)vc
 {
-    LogInOrOutVC *logInVC = [[LogInOrOutVC alloc]init];
-    MainNavC *navi = [[MainNavC alloc]initWithRootViewController:logInVC];
-    [vc presentViewController:navi animated:YES completion:^{
-        [UserDefaultsHelper clearUserDafault];
-    }];
+//    LogInOrOutVC *logInVC = [[LogInOrOutVC alloc]init];
+//    MainNavC *navi = [[MainNavC alloc]initWithRootViewController:logInVC];
+//    [vc presentViewController:navi animated:YES completion:^{
+//        [UserDefaultsHelper clearUserDafault];
+//    }];
 }
 +(void)clearUserDafault
 {
