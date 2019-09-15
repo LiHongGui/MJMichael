@@ -12,6 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
 /**
+ *字典转Model
+ */
++(void)mj_objectWithKeyValues:(NSDictionary *)dict;
+/**
  *判断null,nil
  */
 + (BOOL)stringIsNullOrEmpty:(id)str;

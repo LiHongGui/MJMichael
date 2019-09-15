@@ -9,7 +9,6 @@
 #import "MJMichael.h"
 #import "AFNetworking.h"
 #import "WSProgressHUD.h"
-#import "MJExtension.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
 
@@ -22,7 +21,12 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
-
+#pragma mark-:字典转Model
+//+(NSObject *)mjValues:(NSDictionary *)dict withObj:(NSObject *)objModel
+//{
+//
+//   return [objModel mj_keyValuesDidFinishConvertingToObject:dict];
+//}
 #pragma mark-:*判断null,nil
 + (BOOL)stringIsNullOrEmpty:(id)str
 {
@@ -684,10 +688,9 @@
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
+                XLog(@"MJHttpManagerDict:%@",dict);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
@@ -737,10 +740,9 @@
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
+                XLog(@"MJHttpManagerDict:%@",dict);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
@@ -748,7 +750,7 @@
         if (failureBlock) {
             failureBlock(error);
             [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
-            NSLog(@"error:%@",error);
+            XLog(@"error:%@",error);
             //            [WSProgressHUD dismiss];
         }
     }];
@@ -788,10 +790,9 @@
                     if (callBackJSON) {
                         dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                         successBlock(dict);
-                        NSLog(@"MJHttpManagerDict:%@",dict);
-                        NSLog(@"json:%@",[responseObject mj_JSONString]);
+                        XLog(@"MJHttpManagerDict:%@",dict);
                     }else {
-                        NSLog(@"responseObject:%@",responseObject);
+                        XLog(@"responseObject:%@",responseObject);
                         successBlock(responseObject);
                     }
                 }
@@ -827,12 +828,13 @@
         if (successBlock) {
             NSArray *dict = [NSArray array];
             if (callBackJSON) {
-                dict = [responseObject mj_JSONObject];
+                NSData *jsonData = [responseObject dataUsingEncoding:NSUTF8StringEncoding];
+                NSError *err;
+                dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&err];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
+                XLog(@"MJHttpManagerDict:%@",dict);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
