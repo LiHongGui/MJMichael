@@ -21,12 +21,17 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
-#pragma mark-:字典转Model
-//+(NSObject *)mjValues:(NSDictionary *)dict withObj:(NSObject *)objModel
-//{
-//
-//   return [objModel mj_keyValuesDidFinishConvertingToObject:dict];
-//}
+#pragma mark-:显示菊花
++(void)showBigGray
+{
+    [WSProgressHUD setProgressHUDIndicatorStyle:WSProgressHUDIndicatorBigGray];
+    [WSProgressHUD show];
+}
+#pragma mark-:*showMessage
++(void)showMsg:(NSString *)msg
+{
+    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:msg];
+}
 #pragma mark-:*判断null,nil
 + (BOOL)stringIsNullOrEmpty:(id)str
 {
@@ -674,9 +679,6 @@
 
     AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-
-
-
     if (afMediaType) {
         manager.requestSerializer = [AFJSONRequestSerializer serializer];
         manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
@@ -697,8 +699,8 @@
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-            NSLog(@"error:%@",error);
-            [WSProgressHUD dismiss];
+            XLog(@"error:%@",error);
+//            [WSProgressHUD dismiss];
         }
     }];
 
@@ -1692,6 +1694,10 @@
     }else {
         completion(YES);
     }
+}
++(void)presentVC:(UIViewController *)vc withSucess:(SuccessBlock)sucess completion:(Completion)completion
+{
+    
 }
 +(void)presentVC:(UIViewController *)vc
 {

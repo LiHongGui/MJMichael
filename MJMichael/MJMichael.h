@@ -12,6 +12,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
 /**
+ *显示菊花
+ */
++(void)showBigGray;
+/**
+ *showMessage
+ */
++(void)showMsg:(NSString *)msg;
+
+/**
  *字典转Model
  */
 +(void)mj_objectWithKeyValues:(NSDictionary *)dict;
@@ -466,6 +475,10 @@ typedef void (^Completion)(BOOL finished);
  *present:一个vc,一般指登陆vc
  */
 +(void)presentVC:(UIViewController *)vc;
+/**
+ *present:一个vc,一般指登陆vc
+ */
++(void)presentVC:(UIViewController *)vc withSucess:(SuccessBlock)sucess completion:(Completion)completion;
 /**
  *check账户登陆,没有进行登陆
  *present:一个vc,一般指登陆vc
