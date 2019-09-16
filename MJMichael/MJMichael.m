@@ -8,7 +8,6 @@
 
 #import "MJMichael.h"
 #import "AFNetworking.h"
-#import "WSProgressHUD.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
 
@@ -21,17 +20,7 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
-#pragma mark-:显示菊花
-+(void)showBigGray
-{
-    [WSProgressHUD setProgressHUDIndicatorStyle:WSProgressHUDIndicatorBigGray];
-    [WSProgressHUD show];
-}
-#pragma mark-:*showMessage
-+(void)showMsg:(NSString *)msg
-{
-    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:msg];
-}
+
 #pragma mark-:*判断null,nil
 + (BOOL)stringIsNullOrEmpty:(id)str
 {
@@ -668,6 +657,38 @@
 
 @end
 @implementation MJHttpManager
+- (NSString *)mj_JSONString
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return (NSString *)self;
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return [[NSString alloc] initWithData:(NSData *)self encoding:NSUTF8StringEncoding];
+    }
+
+    return [[NSString alloc] initWithData:[self mj_JSONData] encoding:NSUTF8StringEncoding];
+}
+#pragma mark - 转换为JSON
+- (NSData *)mj_JSONData
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return [((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding];
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return (NSData *)self;
+    }
+
+    return [NSJSONSerialization dataWithJSONObject:[self mj_JSONObject] options:kNilOptions error:nil];
+}
+
+- (id)mj_JSONObject
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return [NSJSONSerialization JSONObjectWithData:[((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return [NSJSONSerialization JSONObjectWithData:(NSData *)self options:kNilOptions error:nil];
+    }
+    return nil;
+    //    return self.mj_keyValues;
+}
 /**
  self.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
  */
@@ -679,28 +700,29 @@
 
     AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+
+
+
     if (afMediaType) {
         manager.requestSerializer = [AFJSONRequestSerializer serializer];
         manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
     }
     [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (successBlock) {
-            [WSProgressHUD dismiss];
             NSDictionary *dict = [NSDictionary dictionary];
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                XLog(@"MJHttpManagerDict:%@",dict);
+                NSLog(@"MJHttpManagerDict:%@",dict);
             }else {
-                XLog(@"responseObject:%@",responseObject);
+                NSLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-            XLog(@"error:%@",error);
-//            [WSProgressHUD dismiss];
+            NSLog(@"error:%@",error);
         }
     }];
 
@@ -732,28 +754,28 @@
     } progress:^(NSProgress * _Nonnull uploadProgress) {
         float update = uploadProgress.fractionCompleted*100;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
+//           // [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
         });
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (successBlock) {
-            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
-            [WSProgressHUD dismiss];
+//           // [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
+//           // [WSProgressHUD dismiss];
             NSDictionary *dict = [NSDictionary dictionary];
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                XLog(@"MJHttpManagerDict:%@",dict);
+                NSLog(@"MJHttpManagerDict:%@",dict);
             }else {
-                XLog(@"responseObject:%@",responseObject);
+                NSLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
-            XLog(@"error:%@",error);
-            //            [WSProgressHUD dismiss];
+//           // [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
+            NSLog(@"error:%@",error);
+            //           // [WSProgressHUD dismiss];
         }
     }];
 
@@ -792,15 +814,15 @@
                     if (callBackJSON) {
                         dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                         successBlock(dict);
-                        XLog(@"MJHttpManagerDict:%@",dict);
+                        NSLog(@"MJHttpManagerDict:%@",dict);
                     }else {
-                        XLog(@"responseObject:%@",responseObject);
+                        NSLog(@"responseObject:%@",responseObject);
                         successBlock(responseObject);
                     }
                 }
                 dispatch_semaphore_signal(semaphore);
             } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-                [WSProgressHUD dismiss];
+               // [WSProgressHUD dismiss];
                 dispatch_semaphore_signal(semaphore);
             }];
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -810,7 +832,7 @@
 
     dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-            [WSProgressHUD dismiss];
+           // [WSProgressHUD dismiss];
             completion(YES);
         });
     });
@@ -830,21 +852,20 @@
         if (successBlock) {
             NSArray *dict = [NSArray array];
             if (callBackJSON) {
-                NSData *jsonData = [responseObject dataUsingEncoding:NSUTF8StringEncoding];
-                NSError *err;
-                dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&err];
+                dict = [responseObject mj_JSONObject];
                 successBlock(dict);
-                XLog(@"MJHttpManagerDict:%@",dict);
+                NSLog(@"MJHttpManagerDict:%@",dict);
+                NSLog(@"json:%@",[responseObject mj_JSONString]);
             }else {
-                XLog(@"responseObject:%@",responseObject);
+                NSLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
-        [WSProgressHUD dismiss];
+       // [WSProgressHUD dismiss];
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-            [WSProgressHUD dismiss];
+           // [WSProgressHUD dismiss];
         }
 
     }];
@@ -1694,10 +1715,6 @@
     }else {
         completion(YES);
     }
-}
-+(void)presentVC:(UIViewController *)vc withSucess:(SuccessBlock)sucess completion:(Completion)completion
-{
-    
 }
 +(void)presentVC:(UIViewController *)vc
 {
