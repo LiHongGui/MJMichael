@@ -1,6 +1,6 @@
-git add -A && git commit -m "创建版本 4.0.9."
+git add -A && git commit -m "创建版本 4.1."
 
-git tag -a 4.0.9 -m "tag release 4.0.9" #打tag
+git tag -a 4.1 -m "tag release 4.1" #打tag
 
 git push --tags #提交tag
 
