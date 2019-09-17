@@ -8,15 +8,17 @@
 
 #import "MJMichael.h"
 #import "AFNetworking.h"
+//#import "WSProgressHUD.h"
+//#import "MJExtension.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
 
 #define kUIScreen [UIScreen mainScreen].bounds
-#ifdef DEBUG
-#define XLog(...) NSLog(__VA_ARGS__)
-#else
-#define XLog(...)
-#endif
+//#ifdef DEBUG
+//#define //XLog(...) //XLog(__VA_ARGS__)
+//#else
+//#define //XLog(...)
+//#endif
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
@@ -572,15 +574,15 @@
     //    NSString *urlStr=[NSString stringWithFormat:@"https://itunes.apple.com/lookup?id=%d",kID];
     //    NSURL *url=[NSURL URLWithString:urlStr];
     //    NSData *json = [NSData dataWithContentsOfURL:url];
-    //    //        XLog(@"json:%@",json);
+    //    //        //XLog(@"json:%@",json);
     //    NSDictionary *dictVersion = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
-    //    NSLog(@"dictVersion:%@",dictVersion);
+    //    //XLog(@"dictVersion:%@",dictVersion);
     //    NSArray *results = [dictVersion objectForKey:@"results"];
     //    NSDictionary *dictSub = results[0];
-    //    NSLog(@"results:%@",results);
+    //    //XLog(@"results:%@",results);
     //    NSString  *message = [dictSub objectForKey:@"releaseNotes"];
     //    NSString *version = [dictSub objectForKey:@"version"];
-    //    NSLog(@"version:%@",version);
+    //    //XLog(@"version:%@",version);
     //    if (![version isEqualToString:getLocalVersion]) {
     //        TYAlertView *alertView = [TYAlertView alertViewWithTitle:[NSString stringWithFormat:@"发现新版本v%@",version] message:@""];
     //        alertView.messageLabel.text = message;
@@ -590,7 +592,7 @@
     //            //                NSString *str = urlStr //更换id即可
     //            //https://itunes.apple.com/cn/app/id1441941518
     //            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://itunes.apple.com/cn/app/id%d",kID]]];
-    //            //XLog(@"%@",action.title);
+    //            ////XLog(@"%@",action.title);
     //        }]];
     //        TYAlertController *alertController = [TYAlertController alertControllerWithAlertView:alertView preferredStyle:TYAlertControllerStyleAlert transitionAnimation:TYAlertTransitionAnimationDropDown];
     //        [self presentViewController:alertController animated:YES completion:nil];
@@ -612,10 +614,11 @@
     NSData *json = [NSData dataWithContentsOfURL:url];
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
     NSArray *resultsSub = [dict objectForKey:@"results"];
-    NSLog(@"获取App Store版本:%@",resultsSub);
+
+    //XLog(@"获取App Store版本:%@",resultsSub);
     NSDictionary *result = [resultsSub objectAtIndex:0];
     NSString *releaseMsg = [result objectForKey:@"releaseNotes"];
-    NSLog(@"releaseMsg:%@",releaseMsg);
+    //XLog(@"releaseMsg:%@",releaseMsg);
     double appStore = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
     if (app_Version < appStore) {
         releaseNotes(releaseMsg);
@@ -639,7 +642,7 @@
     NSData *json = [NSData dataWithContentsOfURL:url];
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
     NSArray *resultsSub = [dict objectForKey:@"results"];
-    NSLog(@"获取App Store版本:%@",resultsSub);
+    //XLog(@"获取App Store版本:%@",resultsSub);
     NSDictionary *result = [resultsSub objectAtIndex:0];
     NSString  *message = [result objectForKey:@"releaseNotes"];
     double versionStr = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
@@ -657,38 +660,6 @@
 
 @end
 @implementation MJHttpManager
-- (NSString *)mj_JSONString
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return (NSString *)self;
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [[NSString alloc] initWithData:(NSData *)self encoding:NSUTF8StringEncoding];
-    }
-
-    return [[NSString alloc] initWithData:[self mj_JSONData] encoding:NSUTF8StringEncoding];
-}
-#pragma mark - 转换为JSON
-- (NSData *)mj_JSONData
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return (NSData *)self;
-    }
-
-    return [NSJSONSerialization dataWithJSONObject:[self mj_JSONObject] options:kNilOptions error:nil];
-}
-
-- (id)mj_JSONObject
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [NSJSONSerialization JSONObjectWithData:[((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [NSJSONSerialization JSONObjectWithData:(NSData *)self options:kNilOptions error:nil];
-    }
-    return nil;
-    //    return self.mj_keyValues;
-}
 /**
  self.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
  */
@@ -709,20 +680,22 @@
     }
     [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (successBlock) {
+
             NSDictionary *dict = [NSDictionary dictionary];
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
+                //XLog(@"MJHttpManagerDict:%@",dict);
+//                //XLog(@"json:%@",[responseObject mj_JSONString]);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                //XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-            NSLog(@"error:%@",error);
+            //XLog(@"error:%@",error);
         }
     }];
 
@@ -754,32 +727,64 @@
     } progress:^(NSProgress * _Nonnull uploadProgress) {
         float update = uploadProgress.fractionCompleted*100;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//           // [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
+            //[WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
         });
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (successBlock) {
-//           // [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
-//           // [WSProgressHUD dismiss];
+            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
+            //[WSProgressHUD dismiss];
             NSDictionary *dict = [NSDictionary dictionary];
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
+                //XLog(@"MJHttpManagerDict:%@",dict);
+//                //XLog(@"json:%@",[responseObject mj_JSONString]);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                //XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-//           // [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
-            NSLog(@"error:%@",error);
-            //           // [WSProgressHUD dismiss];
+            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
+            //XLog(@"error:%@",error);
+            //            //[WSProgressHUD dismiss];
         }
     }];
 
 
+}
+- (id)mj_JSONObject
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return [NSJSONSerialization JSONObjectWithData:[((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return [NSJSONSerialization JSONObjectWithData:(NSData *)self options:kNilOptions error:nil];
+    }
+
+    return nil;
+}
+- (NSString *)mj_JSONString
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return (NSString *)self;
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return [[NSString alloc] initWithData:(NSData *)self encoding:NSUTF8StringEncoding];
+    }
+
+    return [[NSString alloc] initWithData:[self mj_JSONData] encoding:NSUTF8StringEncoding];
+}
+#pragma mark - 转换为JSON
+- (NSData *)mj_JSONData
+{
+    if ([self isKindOfClass:[NSString class]]) {
+        return [((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding];
+    } else if ([self isKindOfClass:[NSData class]]) {
+        return (NSData *)self;
+    }
+
+    return [NSJSONSerialization dataWithJSONObject:[self mj_JSONObject] options:kNilOptions error:nil];
 }
 //[UIView animateWithDuration:1 animations:^{
 //
@@ -808,21 +813,22 @@
                                    @"id":array[i]
                                    };
             [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:dict progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-                XLog(@"HomeresponseObject:%@",responseObject);
+                //XLog(@"HomeresponseObject:%@",responseObject);
                 if (successBlock) {
                     NSDictionary *dict = [NSDictionary dictionary];
                     if (callBackJSON) {
                         dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                         successBlock(dict);
-                        NSLog(@"MJHttpManagerDict:%@",dict);
+                        //XLog(@"MJHttpManagerDict:%@",dict);
+                        //XLog(@"json:%@",[responseObject mj_JSONString]);
                     }else {
-                        NSLog(@"responseObject:%@",responseObject);
+                        //XLog(@"responseObject:%@",responseObject);
                         successBlock(responseObject);
                     }
                 }
                 dispatch_semaphore_signal(semaphore);
             } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-               // [WSProgressHUD dismiss];
+                //[WSProgressHUD dismiss];
                 dispatch_semaphore_signal(semaphore);
             }];
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -832,7 +838,7 @@
 
     dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-           // [WSProgressHUD dismiss];
+            //[WSProgressHUD dismiss];
             completion(YES);
         });
     });
@@ -854,18 +860,18 @@
             if (callBackJSON) {
                 dict = [responseObject mj_JSONObject];
                 successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
+                //XLog(@"MJHttpManagerDict:%@",dict);
+                //XLog(@"json:%@",[responseObject mj_JSONString]);
             }else {
-                NSLog(@"responseObject:%@",responseObject);
+                //XLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
-       // [WSProgressHUD dismiss];
+        //[WSProgressHUD dismiss];
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         if (failureBlock) {
             failureBlock(error);
-           // [WSProgressHUD dismiss];
+            //[WSProgressHUD dismiss];
         }
 
     }];
@@ -1014,7 +1020,7 @@
 {
     for (id obj in scrollView.subviews) {
         if ([obj isKindOfClass:[UIImageView class]]) {
-            XLog(@"obj:%@",obj);
+            //XLog(@"obj:%@",obj);
             UIImageView *iv = (UIImageView *)obj;
             UILabel *label = (UILabel *)obj;
             if (iv.tag == 1000) {
@@ -1088,7 +1094,7 @@
     imagePickerVc.showSelectedIndex = YES;
 
     [imagePickerVc setDidFinishPickingPhotosHandle:^(NSArray<UIImage *> *photos, NSArray *assets, BOOL isSelectOriginalPhoto) {
-        NSLog(@"photos:%@---assets:%@",photos,assets);
+        //XLog(@"photos:%@---assets:%@",photos,assets);
         self.image = photos[0];
         self.imageData = UIImageJPEGRepresentation(self.image, 0.6);
         //选择回调
@@ -1309,11 +1315,11 @@
     // 得到星期几
     // 1(星期天) 2(星期二) 3(星期三) 4(星期四) 5(星期五) 6(星期六) 7(星期天)
     NSInteger weekDay = [comp weekday];
-    //XLog(@"weekDay:%ld",(long)weekDay);//5
+    ////XLog(@"weekDay:%ld",(long)weekDay);//5
     // 得到几号
     NSInteger day = [comp day];
-    //XLog(@"day:%ld",(long)day);//2
-    //    //XLog(@"weekDay:%ld  day:%ld",weekDay,day);
+    ////XLog(@"day:%ld",(long)day);//2
+    //    ////XLog(@"weekDay:%ld  day:%ld",weekDay,day);
 
     // 计算当前日期和这周的星期一和星期天差的天数
     long firstDiff,lastDiff;
@@ -1336,15 +1342,15 @@
 
     NSDateFormatter *formater = [[NSDateFormatter alloc] init];
     [formater setDateFormat:@"yyyy-MM-dd"];
-    //XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
+    ////XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
     NSString *sundayString = [NSString stringWithFormat:@"%@",[formater stringFromDate:firstDayOfWeek]];
     NSDate *lastDate = [formater dateFromString:sundayString];
     long firstStamp = [lastDate timeIntervalSince1970]*1000;
-    //XLog(@"firstStamp:%ld",firstStamp);
-    //XLog(@"当前 %@",[formater stringFromDate:now]);
-    //XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
+    ////XLog(@"firstStamp:%ld",firstStamp);
+    ////XLog(@"当前 %@",[formater stringFromDate:now]);
+    ////XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
     NSString *timeStr = [NSString stringWithFormat:@"%ld",firstStamp];
-    //XLog(@"timeStr:%@",timeStr);
+    ////XLog(@"timeStr:%@",timeStr);
     return timeStr;
 }
 /*当前时间毫秒*/
@@ -1500,7 +1506,7 @@
     // 得到几号
     NSInteger day = [comp day];
 
-    //    //XLog(@"weekDay:%ld  day:%ld",weekDay,day);
+    //    ////XLog(@"weekDay:%ld  day:%ld",weekDay,day);
 
     // 计算当前日期和这周的星期一和星期天差的天数
     long firstDiff,lastDiff;
@@ -1523,13 +1529,13 @@
 
     NSDateFormatter *formater = [[NSDateFormatter alloc] init];
     [formater setDateFormat:@"yyyy-MM-dd"];
-    //XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
+    ////XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
     //    NSString *sundayString = [NSString stringWithFormat:@"%@",[formater stringFromDate:firstDayOfWeek]];
     //    NSDate *lastDate = [formater dateFromString:sundayString];
     //    long firstStamp = [lastDate timeIntervalSince1970]*1000;
-    //XLog(@"firstStamp:%ld",firstStamp);
-    //XLog(@"当前 %@",[formater stringFromDate:now]);
-    //XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
+    ////XLog(@"firstStamp:%ld",firstStamp);
+    ////XLog(@"当前 %@",[formater stringFromDate:now]);
+    ////XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
 
     /**
      2018-08-02 11:05:51.836838+0800 KamunShangCheng[916:169288] 一周开始 2018-07-29
@@ -1548,7 +1554,7 @@
     NSDate *dateA = [dateFormatter dateFromString:oneDayStr];
     NSDate *dateB = [dateFormatter dateFromString:anotherDayStr];
     NSComparisonResult result = [dateA compare:dateB];
-    //XLog(@"oneDay : %@, anotherDay : %@", oneDay, anotherDay);
+    ////XLog(@"oneDay : %@, anotherDay : %@", oneDay, anotherDay);
     /**
      //该方法用于排序时调用:
      . 当实例保存的日期值与anotherDate相同时返回NSOrderedSame
@@ -1557,19 +1563,19 @@
      */
     if (result == NSOrderedDescending) {
         //在指定时间前面 过了指定时间 过期
-        //XLog(@"oneDay  is in the future");
+        ////XLog(@"oneDay  is in the future");
         return 1;
     }
     else if (result == NSOrderedAscending){
         //没过指定时间 没过期
-        ////XLog(@"Date1 is in the past");
+        //////XLog(@"Date1 is in the past");
         return -1;
     }else {
         return 0;
 
     }
     //刚好时间一样.
-    ////XLog(@"Both dates are the same");
+    //////XLog(@"Both dates are the same");
 
 }
 
@@ -1636,10 +1642,10 @@
     NSTimeZone* timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
     [formatter setTimeZone:timeZone];
     NSDate *datenow = [NSDate date];//现在时间
-    NSLog(@"设备当前的时间:%@",[formatter stringFromDate:datenow]);
+    //XLog(@"设备当前的时间:%@",[formatter stringFromDate:datenow]);
     //时间转时间戳的方法:
     NSInteger timeSp = [[NSNumber numberWithDouble:[datenow timeIntervalSince1970]] integerValue]*1000;
-    NSLog(@"设备当前的时间戳:%ld",(long)timeSp); //时间戳的值
+    //XLog(@"设备当前的时间戳:%ld",(long)timeSp); //时间戳的值
 
     return timeSp;
 
@@ -1726,14 +1732,14 @@
 }
 +(void)clearUserDafault
 {
-    XLog(@"id:%@",[UserDefaultsHelper readUserId]);
+    //XLog(@"id:%@",[UserDefaultsHelper readUserId]);
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"headimg"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"sex"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"nickname"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"sign"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"userAccount"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"userId"];
-    XLog(@"id:%@",[UserDefaultsHelper readUserId]);
+    //XLog(@"id:%@",[UserDefaultsHelper readUserId]);
 }
 +(void)saveAutoLogIn:(id)autoLogIn value:(NSString *)autoLogInYESORNO
 {
