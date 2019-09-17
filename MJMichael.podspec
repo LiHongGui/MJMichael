@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "MJMichael"
-  s.version      = "4.0.8"
+  s.version      = "4.0.9"
   s.summary      = "封装库"
 
   # This description is used to generate tags and improve search results.
@@ -91,7 +91,7 @@ Pod::Spec.new do |s|
   #  Not including the public_header_files will make all headers public.
   #
 
-  s.source_files  = "MJMichael", "MJMichael/**/*.{h,m,bundle}"
+  s.source_files  = "MJMichael", "MJMichael/**/*.{h,m}"
   # spec.exclude_files = "Classes/Exclude"
 
   # spec.public_header_files = "Classes/**/*.h"
@@ -106,7 +106,7 @@ Pod::Spec.new do |s|
   #
 
   # spec.resource  = "icon.png"
-  # spec.resources = "Resources/*.png"
+  spec.resources = "MJMichael/MJRefresh/Resources/MJRefresh.bundle"
 
   # spec.preserve_paths = "FilesToSave", "MoreFilesToSave"
 
