@@ -653,7 +653,7 @@
 //上线
 //#define kRootPath @"http://202.109.75.181:9080/"
 //测试
-#define kRootPath @"http://112.27.198.23:8093/"
+#define kRootPath @"http://tt.kakacaifu.com/baby_product/"
 //本地
 //#define kRootPath @"http://192.168.50.26/"
 @interface MJHttpManager()
@@ -685,10 +685,10 @@
             if (callBackJSON) {
                 dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 successBlock(dict);
-                //XLog(@"MJHttpManagerDict:%@",dict);
-//                //XLog(@"json:%@",[responseObject mj_JSONString]);
+                NSLog(@"MJHttpManagerDict:%@",dict);
+                NSLog(@"json:%@",[responseObject mj_JSONString]);
             }else {
-                //XLog(@"responseObject:%@",responseObject);
+                NSLog(@"responseObject:%@",responseObject);
                 successBlock(responseObject);
             }
         }
@@ -880,7 +880,7 @@
 
 @implementation MJMutableAttributedString
 #pragma mark-代理:超链接
--(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString
++(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString
 {
 
     NSMutableAttributedString *attaStr = [[NSMutableAttributedString alloc] initWithString:defaultString];
@@ -892,9 +892,9 @@
 
 
 #pragma mark-:label斜线
--(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString
++(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString
 {
-    return [[NSMutableAttributedString alloc] initWithString:defaultString attributes:@{NSUnderlineStyleAttributeName : [NSNumber numberWithInteger:NSUnderlineStyleSingle]}];
+    return [[NSMutableAttributedString alloc] initWithString:defaultString attributes:@{NSStrikethroughStyleAttributeName : @(NSUnderlineStyleSingle)}];
 }
 #pragma mark-:字体颜色变换
 +(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeColor:(UIColor *)color forCharStr:(NSString *)charStr

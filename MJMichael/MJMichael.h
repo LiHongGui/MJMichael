@@ -200,11 +200,11 @@ typedef void (^Completion)(BOOL finished);
  *defaultString:内容
  *urlStr:链接
  */
--(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString;
++(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString;
 /**
- *label斜线
+ *label删除线
  */
--(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString;
++(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString;
 /**
  *字体颜色变换
  */
