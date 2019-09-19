@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "MJMichael"
-  s.version      = "4.1.2"
+  s.version      = "4.1.3"
   s.summary      = "封装库"
 
   # This description is used to generate tags and improve search results.
@@ -106,7 +106,7 @@ Pod::Spec.new do |s|
   #
 
   # spec.resource  = "icon.png"
-  s.resources = "MJMichael/MJRefresh/Resources/MJRefresh.bundle"
+  s.resources = "MJMichael/Resources/*.{bundle}"
 
   # spec.preserve_paths = "FilesToSave", "MoreFilesToSave"
 
