@@ -12,7 +12,6 @@
 //#import "MJExtension.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
-#import "AFNetworkReachabilityManager.h"
 #define kUIScreen [UIScreen mainScreen].bounds
 //#ifdef DEBUG
 //#define //XLog(...) //XLog(__VA_ARGS__)
@@ -22,28 +21,6 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
-#pragma mark----网络检测
-+(void)netWorkState:(MJNetStateBlock)netFinished
-{
-    AFNetworkReachabilityManager *manager = [AFNetworkReachabilityManager sharedManager];
-    // 提示：要监控网络连接状态，必须要先调用单例的startMonitoring方法
-    [manager startMonitoring];
-    //检测的结果
-    __block typeof(self) bself = self;
-    [manager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        if (status==0||status==-1) {
-            //弹出提示框
-//            [bself showWarningView];
-            //将netState值传入block中
-            netFinished(NO);
-        }else{
-            //将netState值传入block中
-            netFinished(YES);
-        }
-    }];
-}
-
-
 
 #pragma mark-:*判断null,nil
 + (BOOL)stringIsNullOrEmpty:(id)str
@@ -694,7 +671,7 @@
     AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
 
-    NSLog(@"parameters:%@---urlString:%@",parameters,[NSString stringWithFormat:@"%@%@",kRootPath,urlString]);
+
 
     if (afMediaType) {
         manager.requestSerializer = [AFJSONRequestSerializer serializer];
@@ -1024,14 +1001,14 @@
             if (iv.tag != 1000) {
                 imageView.image = image;
                 imageView.tag = 1000;
-                imageView.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, [UIApplication sharedApplication].keyWindow.frame.size.height/2-y);
+                imageView.center = CGPointMake(scrollView.center.x, y);
                 [scrollView addSubview:imageView];
                 label.tag = 1001;
                 label.text = @"暂无数据";
                 label.textAlignment = NSTextAlignmentCenter;
                 label.textColor = kLabel102Color;
                 label.font = [UIFont systemFontOfSize:14];
-                label.center = CGPointMake([UIScreen mainScreen].bounds.size.width/2, CGRectGetMaxY(imageView.frame)+15);
+                label.center = CGPointMake(scrollView.center.x, CGRectGetMaxY(imageView.frame)+15);
                 [scrollView addSubview:label];
             }
         }
@@ -1093,20 +1070,26 @@
     [imagePickerVc setUiImagePickerControllerSettingBlock:^(UIImagePickerController *imagePickerController) {
         imagePickerController.videoQuality = UIImagePickerControllerQualityTypeHigh;
     }];
-    /**
-     @property (nonatomic, strong) UIColor *oKButtonTitleColorNormal;
-     @property (nonatomic, strong) UIColor *oKButtonTitleColorDisabled;
-     @property (nonatomic, strong) UIColor *naviBgColor;
-     @property (nonatomic, strong) UIColor *naviTitleColor;
-     @property (nonatomic, strong) UIFont *naviTitleFont;
-     @property (nonatomic, strong) UIColor *barItemTextColor;
-     @property (nonatomic, strong) UIFont *barItemTextFont;
-     */
-//    imagePickerVc.naviTitleColor = [UIColor blackColor];
-//    imagePickerVc.oKButtonTitleColorNormal = [UIColor blackColor];
-//    imagePickerVc.naviBgColor = [UIColor blackColor];
-//    imagePickerVc.naviTitleColor = [UIColor blackColor];
-    imagePickerVc.barItemTextColor = [UIColor blackColor];
+//    if ([imagePickerVc.navigationBar respondsToSelector:@selector(setBarTintColor:)]) {
+//
+//        [imagePickerVc.navigationBar setBarTintColor:[UIColor colorWithWhite:0.1 alpha:1.0]];
+//
+//        [imagePickerVc.navigationBar setTranslucent:YES];
+//
+//        [imagePickerVc.navigationBar setTintColor:[UIColor redColor]];
+//
+//    }else{
+//
+        [imagePickerVc.navigationBar setBackgroundColor:[UIColor colorWithWhite:0.1 alpha:1.0]];
+//
+//    }
+//    imagePickerVc.navigationController.navigationBar.translucent = NO;
+////    imagePickerVc
+//    [imagePickerVc.navigationBar setBackgroundImage:[MJMichael createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)] forBarMetrics:UIBarMetricsDefault];
+//    [imagePickerVc setNaviBgColor:[UIColor orangeColor]];
+//    [imagePickerVc setBarItemTextColor:[UIColor redColor]];
+////    NSLog(@"")
+////    imagePickerVc.naviBgColor = [UIColor orangeColor];
 //    [imagePickerVc.navigationBar setBackgroundImage:[MJMichael createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)] forBarMetrics:UIBarMetricsDefault];
 //    imagePickerVc.navigationBar.shadowImage = [MJMichael createImageWithColor:[UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1] withRect:CGRectMake(0.0f, 0.0f, 1.0f, 1.0f)];
 //    imagePickerVc.iconThemeColor = [UIColor colorWithRed:170/255.0 green:43/255.0 blue:36/255.0 alpha:1];
