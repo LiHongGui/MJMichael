@@ -9,8 +9,16 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 NS_ASSUME_NONNULL_BEGIN
-
+typedef void(^MJNetStateBlock)(BOOL netFinished);
 @interface MJMichael : NSObject
+/**
+ *  网络监测
+ *
+ *  @param block 判断结果回调
+ *
+ *  @return 网络监测
+ */
++(void)netWorkState:(MJNetStateBlock)netFinished;
 /**
  *判断null,nil
  */
