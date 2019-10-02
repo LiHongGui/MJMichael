@@ -12,13 +12,53 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
 /**
+ *隐藏导航栏
+ */
++(void)mjHiddenNaviBar:(UIViewController *)vc;
+/**
+ *设置导航栏左右字体颜色
+ */
++(void)mjNaviBarItemColor:(UIViewController *)vc withColor:(UIColor *)color;
+/**
+ *设置导航栏背景色
+ */
++(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color;
+/**
+ *statusBarStyleColor
+ */
++(void)statusBarStyleColor:(UIColor *)statusColor;
+/**
+ *导航栏高度
+ */
++ (CGFloat)mjNavBarHeight;
+/**
+ *状态栏高度
+ */
++ (CGFloat)mjStatusHeight;
+/**
+ *tabBar栏高度
+ */
++ (CGFloat)mjTabBarHeight;
+/**
+ *screenWidth
+ */
++ (CGFloat)mjScreenWidth;
+/**
+ *screenHeight
+ */
++ (CGFloat)mjScreenHeight;
+/**
+ *隐藏导航栏底部黑线
+ */
++(void)mjHiddenBottomLine:(UIViewController*)vc;
+/**
  *判断null,nil
  */
 + (BOOL)stringIsNullOrEmpty:(id)str;
 /**
  *图片颜色
  */
-+(UIImage*) createImageWithColor:(UIColor*)color withRect:(CGRect)rect;
++(UIImage*)createImageWithColor:(UIColor*)color withRect:(CGRect)rect;
 /*
  *自定义图片大小:UISlider的大小等等
  */

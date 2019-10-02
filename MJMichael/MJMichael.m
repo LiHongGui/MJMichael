@@ -7,6 +7,7 @@
 //
 
 #import "MJMichael.h"
+#import <UIKit/UIKit.h>
 #import "AFNetworking.h"
 //#import "WSProgressHUD.h"
 //#import "MJExtension.h"
@@ -21,7 +22,83 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
+#pragma mark-:隐藏导航栏
++(void)mjHiddenNaviBar:(UIViewController *)vc
+{
+//    vc.navigationController.navigationBar.translucent = YES;
+    [vc.navigationController.navigationBar setShadowImage:[UIImage new]];
+    [vc.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
 
+}
+#pragma mark-:设置导航栏左右字体颜色
++(void)mjNaviBarItemColor:(UIViewController *)vc withColor:(UIColor *)color
+{
+    [vc.navigationItem.rightBarButtonItem setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14],NSForegroundColorAttributeName:color} forState:UIControlStateNormal];
+    [vc.navigationItem.leftBarButtonItem setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14],NSForegroundColorAttributeName:color} forState:UIControlStateNormal];
+}
+
+#pragma mark-:设置导航栏背景色
++(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color
+{
+    [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
+}
++ (BOOL)isIphoneX {
+    if ([UIApplication sharedApplication].statusBarFrame.size.height == 44) {
+        return YES;
+    }
+    else {
+        return NO;
+    }
+}
+#pragma mark-statusBarStyle
++(void)statusBarStyleColor:(UIColor *)statusColor
+{
+    if (CGColorEqualToColor(statusColor.CGColor,[UIColor whiteColor].CGColor)) {
+        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;    }else {
+        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
+    }
+}
+#pragma mark-导航栏高度
++ (CGFloat)mjNavBarHeight
+{
+    if ([self isIphoneX]) {
+        return 88;
+    }
+    else {
+        return 64;
+    }
+}
+#pragma mark-状态栏高度
++ (CGFloat)mjStatusHeight
+{
+    return [UIApplication sharedApplication].statusBarFrame.size.height;
+}
+#pragma mark-导航栏高度
++ (CGFloat)mjTabBarHeight
+{
+    if ([self isIphoneX]) {
+        return 83;
+    }
+    else {
+        return 49;
+    }
+}
+#pragma mark-screenWidth
++ (CGFloat)mjScreenWidth
+{
+    return [UIScreen mainScreen].bounds.size.width;
+}
+
+#pragma mark-screenHeight
++ (CGFloat)mjScreenHeight
+{
+    return [UIScreen mainScreen].bounds.size.height;
+}
+#pragma mark-:隐藏导航栏底部黑线
++(void)mjHiddenBottomLine:(UIViewController*)vc
+{
+    [vc.navigationController.navigationBar setShadowImage:[UIImage new]];
+}
 #pragma mark-:*判断null,nil
 + (BOOL)stringIsNullOrEmpty:(id)str
 {
