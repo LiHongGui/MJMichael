@@ -8,7 +8,7 @@
 
 #import "MJMichael.h"
 #import <UIKit/UIKit.h>
-#import "AFNetworking.h"
+//#import "AFNetworking.h"
 //#import "WSProgressHUD.h"
 //#import "MJExtension.h"
 #import "MJRefresh.h"
@@ -22,12 +22,52 @@
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 
 @implementation MJMichael
++ (UIColor *) colorWithHexString: (NSString *)color
+{
+    NSString *cString = [[color stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+
+    // String should be 6 or 8 characters
+    if ([cString length] < 6) {
+        return [UIColor clearColor];
+    }
+    // 判断前缀
+    if ([cString hasPrefix:@"0X"])
+        cString = [cString substringFromIndex:2];
+    if ([cString hasPrefix:@"#"])
+        cString = [cString substringFromIndex:1];
+    if ([cString length] != 6)
+        return [UIColor clearColor];
+    // 从六位数值中找到RGB对应的位数并转换
+    NSRange range;
+    range.location = 0;
+    range.length = 2;
+    //R、G、B
+    NSString *rString = [cString substringWithRange:range];
+    range.location = 2;
+    NSString *gString = [cString substringWithRange:range];
+    range.location = 4;
+    NSString *bString = [cString substringWithRange:range];
+    // Scan values
+    unsigned int r, g, b;
+    [[NSScanner scannerWithString:rString] scanHexInt:&r];
+    [[NSScanner scannerWithString:gString] scanHexInt:&g];
+    [[NSScanner scannerWithString:bString] scanHexInt:&b];
+
+    return [UIColor colorWithRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+}
 #pragma mark-:隐藏导航栏
 +(void)mjHiddenNaviBar:(UIViewController *)vc
 {
-//    vc.navigationController.navigationBar.translucent = YES;
+    vc.navigationController.navigationBar.translucent = YES;
     [vc.navigationController.navigationBar setShadowImage:[UIImage new]];
     [vc.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
+
+}
++(void)mjAppearNaviBar:(UIViewController *)vc color:(UIColor *)color
+{
+    vc.navigationController.navigationBar.translucent = NO;
+    [vc.navigationController.navigationBar setShadowImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)]];
+    [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
 
 }
 #pragma mark-:设置导航栏左右字体颜色
@@ -35,12 +75,23 @@
 {
     [vc.navigationItem.rightBarButtonItem setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14],NSForegroundColorAttributeName:color} forState:UIControlStateNormal];
     [vc.navigationItem.leftBarButtonItem setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:14],NSForegroundColorAttributeName:color} forState:UIControlStateNormal];
+    [vc.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName:color}];
 }
 
 #pragma mark-:设置导航栏背景色
-+(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color
++(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color withAlpha:(CGFloat )alpha
 {
-    [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
+
+    [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:[color colorWithAlphaComponent:alpha] withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
+    [vc.navigationController.navigationBar setShadowImage:[UIImage new]];
+
+    if (alpha>=1) {
+        [vc.navigationController setNavigationBarHidden:NO animated:NO];
+        vc.navigationController.navigationBar.translucent = NO;
+    }else {
+//        [vc.navigationController setNavigationBarHidden:YES animated:NO];
+        vc.navigationController.navigationBar.translucent = YES;
+    }
 }
 + (BOOL)isIphoneX {
     if ([UIApplication sharedApplication].statusBarFrame.size.height == 44) {
@@ -54,7 +105,9 @@
 +(void)statusBarStyleColor:(UIColor *)statusColor
 {
     if (CGColorEqualToColor(statusColor.CGColor,[UIColor whiteColor].CGColor)) {
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;    }else {
+        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+
+    }else {
         [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
     }
 }
@@ -137,6 +190,18 @@
 @property(nonatomic,strong) UILabel *markLabel;
 @end
 @implementation MJLabel
++ (CGFloat)getHeightByWidth:(CGFloat)width title:(NSString *)title font:(UIFont *)font
+{
+
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width, 0)];
+    label.text = title;
+    label.font = font;
+
+    label.numberOfLines = 0;
+    [label sizeToFit];
+    CGFloat height = label.frame.size.height;
+    return height;
+}
 #pragma mark-: *Label高度
 + (CGFloat)getHeightByWidth:(CGFloat)width title:(NSString *)title withFontSize:(CGFloat )fontSize
 {
@@ -149,12 +214,12 @@
     return height;
 }
 #pragma mark-: *Label宽度
-+ (CGFloat)getWidthWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize{
++ (CGFloat)getWidthWithTitle:(NSString *)title withWidth:(CGFloat )width withFontSize:(CGFloat )fontSize{
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, kUIScreen.size.width, 0)];
     label.text = title;
     label.font = [UIFont systemFontOfSize:fontSize];
     NSStringDrawingOptions options = NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading;
-    CGSize defaultSize = [title boundingRectWithSize:CGSizeMake([UIScreen mainScreen].bounds.size.width, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
+    CGSize defaultSize = [title boundingRectWithSize:CGSizeMake(width, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
     [label sizeToFit];
 
     return defaultSize.width;
@@ -169,23 +234,7 @@
     CGSize defaultSize = [title boundingRectWithSize:CGSizeMake(kUIScreen.size.width, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
     return defaultSize.height;
 }
-#pragma mark-:Label行间距
-+(NSAttributedString *)setlineSpacing:(CGFloat)lineSpacingValue withText:(NSString*)str withFontSize:(CGFloat )fontSize withAlignment:(NSTextAlignment)alignment
-{
-    NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
-    paraStyle.lineBreakMode = NSLineBreakByCharWrapping;
-    paraStyle.alignment = alignment;
-    paraStyle.lineSpacing = lineSpacingValue; //设置行间距
-    paraStyle.hyphenationFactor = 1.0;
-    paraStyle.firstLineHeadIndent = 0.0;
-    paraStyle.paragraphSpacingBefore = 0.0;
-    paraStyle.headIndent = 0;
-    paraStyle.tailIndent = 0;
-    //设置字间距 NSKernAttributeName:@1.5f
-    NSDictionary *dic = @{NSFontAttributeName:[UIFont systemFontOfSize:fontSize],NSParagraphStyleAttributeName:paraStyle, NSKernAttributeName:@1.5f                        };
-    NSAttributedString *attributeStr = [[NSAttributedString alloc] initWithString:str attributes:dic];
-    return attributeStr;
-}
+
 #pragma mark-:Label行间距---height
 +(CGFloat)attributeStrHeightWithText:(NSString*)str withWidth:(CGFloat)width withFontSize:(CGFloat )fontSize{
     CGSize maxSize = CGSizeMake(width, MAXFLOAT);
@@ -206,6 +255,22 @@
     CGRect contentRect = [attributedString boundingRectWithSize:maxSize options:NSStringDrawingUsesLineFragmentOrigin context:nil];
     return contentRect.size.width;
 }
++(NSAttributedString *)setIndexHeadSpacing:(CGFloat)indexHeadSpacingValue withText:(NSString*)str withFont:(CGFloat )font withAlignment:(NSTextAlignment)alignment
+{
+    NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
+    paraStyle.lineBreakMode = NSLineBreakByCharWrapping;
+    paraStyle.alignment = alignment;
+//    paraStyle.lineSpacing = lineSpacingValue; //设置行间距
+//    paraStyle.hyphenationFactor = 1.0;
+    paraStyle.firstLineHeadIndent = indexHeadSpacingValue;
+    paraStyle.paragraphSpacingBefore = 0.0;
+    paraStyle.headIndent = indexHeadSpacingValue;
+    paraStyle.tailIndent = 0;
+     //设置字间距 NSKernAttributeName:@1.5f
+    NSDictionary *dic = @{NSFontAttributeName:[UIFont systemFontOfSize:font],NSParagraphStyleAttributeName:paraStyle, NSKernAttributeName:@1.5f                        };
+       NSAttributedString *attributeStr = [[NSAttributedString alloc] initWithString:str attributes:dic];
+    return attributeStr;
+}
 #pragma mark-:自动布局后---高度
 +(float)totalsArray:(NSArray *)totalsArray withMaxNum:(NSInteger)maxNum withFontSize:(CGFloat )fontSize withMarginTop:(NSInteger)marginTop withMarginLeft:(NSInteger)marginLeft withMarginRight:(NSInteger)marginRight withMargin:(NSInteger)margin
 {
@@ -216,7 +281,8 @@
     }
     CGFloat widthX = 0;
     for (int i = 0; i < num; i++) {
-        CGFloat w = [MJLabel getWidthWithTitle:totalsArray[i] withFontSize:fontSize]+20;
+
+        CGFloat w =  [MJLabel getWidthWithTitle:totalsArray[i] withWidth:kUIScreen.size.width withFontSize:fontSize]+20;
         if ( w > kUIScreen.size.width -marginRight-marginLeft) {
             w = kUIScreen.size.width -marginRight-marginLeft;
         }
@@ -242,7 +308,7 @@
         self.buttonStyle = imageLeft;
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
         //自定义
-        [self setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+         [self setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [self setTitleColor:[UIColor orangeColor] forState:UIControlStateSelected];
         UIImage *imageNor = [UIImage imageNamed:@"btn_nor_xiaosanjiao"];
         UIImage *imageHig = [UIImage imageNamed:@"btn_click_xiaosanjiao"];
@@ -271,15 +337,22 @@
 
     return self;
 }
+
 - (CGRect)imageRectForContentRect:(CGRect)contentRect{
     if (self.buttonStyle == imageRight) {
         return [self imageRectWithImageRightForContentTect:contentRect];
     }else if (self.buttonStyle == imageRightSide) {
         return [self imageRectWithImageRightSideForContentTect:contentRect];
-    }else if (self.buttonStyle == imageTop){
+    }else if (self.buttonStyle == imageEdgeRight){
+        return [self imageRectWithImageEdgeRightForContentTect:contentRect];
+    }
+    else if (self.buttonStyle == imageTop){
         return [self imageRectWithImageTopForContentTect:contentRect];
-    }else if (self.buttonStyle == imageBottom){
+    }
+    else if (self.buttonStyle == imageBottom){
         return [self imageRectWithImageBottomForContentTect:contentRect];
+    }else if (self.buttonStyle == imageBottomLine){
+        return [self imageRectWithImageBottomLineForContentTect:contentRect];
     }else if (self.buttonStyle == colorCreatImageBottom) {
         return [self imageRectWithColorCreatImageBottomForContentTect:contentRect];
     }else if (self.buttonStyle == imageBottomNone) {
@@ -296,15 +369,22 @@
         return [self titleRectWithImageRightForContentTect:contentRect];
     }else if (self.buttonStyle == imageRightSide) {
         return [self titleRectWithImageRightSideForContentTect:contentRect];
-    }else if (self.buttonStyle == imageTop){
+    }else if (self.buttonStyle == imageEdgeRight){
+        return [self titleRectWithImageEdgeRightForContentTect:contentRect];
+    }
+    else if (self.buttonStyle == imageTop){
         return [self titleRectWithImageTopForContentTect:contentRect];
-    }else if (self.buttonStyle == imageBottom){
+    }
+    else if (self.buttonStyle == imageBottom){
         return [self titleRectWithImageBottomForContentTect:contentRect];
+    }else if (self.buttonStyle == imageBottomLine){
+        return [self titleRectWithImageBottomLineForContentTect:contentRect];
     }else if (self.buttonStyle == colorCreatImageBottom) {
         return [self titleRectWithColorCreatImageBottomForContentTect:contentRect];
     }else if (self.buttonStyle == imageBottomNone) {
         return [self titleRectWithImageBottomNoneForContentTect:contentRect];
-    }else {
+    }
+    else {
         return [self titleRectWithImageLeftForContentTect:contentRect];
     }
 }
@@ -355,7 +435,28 @@
 
     return rect;
 }
+//
+#pragma mark imageBottom 图片在下 文字在上---Line
+- (CGRect)imageRectWithImageBottomLineForContentTect:(CGRect)contentRect{
+    CGFloat imageW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
+    CGFloat titleH = [self heightForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
+    CGFloat imageY = (CGRectGetHeight(contentRect)-2-titleH)/2+titleH;
+    CGFloat imageX = (CGRectGetWidth(contentRect) - imageW)/2;
+    CGRect rect = CGRectMake(imageX, contentRect.size.height-2, imageW, 2);
+    return rect;
 
+}
+
+- (CGRect)titleRectWithImageBottomLineForContentTect:(CGRect)contentRect{
+    CGFloat titleH = [self heightForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
+    CGFloat imageWH = CGRectGetHeight(contentRect)/2*scale;
+    CGFloat titleY = (CGRectGetHeight(contentRect)-imageWH-titleH)/2;
+    #warning 自定义
+//    CGFloat titleY = (CGRectGetHeight(contentRect)-titleH)/2-5/2;
+    CGRect rect = CGRectMake(0, titleY, CGRectGetWidth(contentRect) , titleH);
+
+    return rect;
+}
 #pragma mark imageBottom 图片在下 文字在上
 - (CGRect)imageRectWithImageBottomForContentTect:(CGRect)contentRect{
     CGFloat imageWH = CGRectGetHeight(contentRect)/2*scale;
@@ -366,19 +467,19 @@
 
     return rect;
 #warning 我自定义
-    ////    CGFloat titleW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
-    //    CGFloat w = contentRect.size.width;
-    //    CGFloat x = (CGRectGetWidth(contentRect))/2 -w/2;
-    //    CGFloat y = (CGRectGetHeight(contentRect)) -5;
-    //    CGFloat h = 3;
-    //    return CGRectMake(x, y, w, h);
+////    CGFloat titleW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
+//    CGFloat w = contentRect.size.width;
+//    CGFloat x = (CGRectGetWidth(contentRect))/2 -w/2;
+//    CGFloat y = (CGRectGetHeight(contentRect)) -5;
+//    CGFloat h = 3;
+//    return CGRectMake(x, y, w, h);
 }
 - (CGRect)titleRectWithImageBottomForContentTect:(CGRect)contentRect{
     CGFloat imageWH = CGRectGetHeight(contentRect)/2*scale;
     CGFloat titleH = [self heightForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
     CGFloat titleY = (CGRectGetHeight(contentRect)-imageWH-titleH)/2;
-#warning 自定义
-    //    CGFloat titleY = (CGRectGetHeight(contentRect)-titleH)/2-5/2;
+    #warning 自定义
+//    CGFloat titleY = (CGRectGetHeight(contentRect)-titleH)/2-5/2;
     CGRect rect = CGRectMake(0, titleY, CGRectGetWidth(contentRect) , titleH);
 
     return rect;
@@ -390,9 +491,9 @@
 - (CGRect)titleRectWithImageBottomNoneForContentTect:(CGRect)contentRect{
     CGFloat titleH = [self heightForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
 #warning 自定义
-    CGFloat titleY = (CGRectGetHeight(contentRect)-titleH)/2;
-    CGRect rect = CGRectMake(0, titleY, CGRectGetWidth(contentRect) , titleH);
-
+    CGFloat imageWH = CGRectGetHeight(contentRect)/2*scale;
+    CGFloat titleY = (CGRectGetHeight(contentRect)-imageWH-titleH)/2;
+    CGRect rect = CGRectMake(0, 0, CGRectGetWidth(contentRect) , contentRect.size.height);
     return rect;
 }
 #warning imageRectWithColorCreatImageBottomForContentTect
@@ -402,7 +503,6 @@
     //    CGFloat imageY = (CGRectGetHeight(contentRect)-imageWH-titleH)/2+titleH;
     //    CGFloat imageX = (CGRectGetWidth(contentRect) - imageWH)/2;
     //    CGRect rect = CGRectMake(imageX, imageY, imageWH, imageWH);
-    //
     //    return rect;
 #warning 我自定义
     //    CGFloat titleW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
@@ -449,19 +549,23 @@
 - (CGRect)titleRectWithImageRightSideForContentTect:(CGRect)contentRect{
     CGFloat imageWH = CGRectGetHeight(contentRect)*scale;
     CGFloat titleW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
-    //    CGFloat titleW = [MCButton getWidthWithTitle:[self currentTitle] withFontSize:13];
+//    CGFloat titleW = [MCButton getWidthWithTitle:[self currentTitle] withFontSize:13];
     CGFloat titleX = (CGRectGetWidth(contentRect)-titleW-imageWH)/2;
 #warning 我自定义
     //    CGFloat titleX = (CGRectGetWidth(contentRect))/2 - titleW/2;
     //    if (titleX < 0) {
     //        titleX = 0;
     //    }
+//    self.titleLabel.textAlignment = NSTextAlignmentRight;
+    NSLog(@"titleW:%f---%f",titleW,CGRectGetWidth(contentRect));
     if (titleW > CGRectGetWidth(contentRect)*0.8) {
         titleW = CGRectGetWidth(contentRect)*0.8;
         CGRect rect = CGRectMake(titleX, 0, titleW , CGRectGetHeight(contentRect));
         return rect;
     }
-    CGRect rect = CGRectMake(titleX, 0, titleW , CGRectGetHeight(contentRect));
+//    CGRect rect = CGRectMake(0, 0, CGRectGetWidth(contentRect) , CGRectGetHeight(contentRect));
+//    self.titleEdgeInsets = UIEdgeInsetsMake(-50, 0, 0, 0);
+    CGRect rect = CGRectMake(0, 0, titleW+100 , CGRectGetHeight(contentRect));
     return rect;
 
 }
@@ -481,12 +585,12 @@
 
     return rect;
 
-    //    #warning 我自定义
-    //    CGFloat w = 25/2;
-    //    CGFloat x = (CGRectGetWidth(contentRect))/2 + titleW/2.2;
-    //    CGFloat h = 16/2;
-    //    CGFloat y = self.frame.size.height/2 - h/2;
-    //    return CGRectMake(x, y, w, h);
+//    #warning 我自定义
+//    CGFloat w = 25/2;
+//    CGFloat x = (CGRectGetWidth(contentRect))/2 + titleW/2.2;
+//    CGFloat h = 16/2;
+//    CGFloat y = self.frame.size.height/2 - h/2;
+//    return CGRectMake(x, y, w, h);
 }
 
 - (CGRect)titleRectWithImageRightForContentTect:(CGRect)contentRect{
@@ -494,15 +598,15 @@
     //[MCButton getWidthWithTitle:model.name withFontSize:13]
     CGFloat titleW = [self widthForTitleString:[self titleForState:UIControlStateNormal] ContentRect:contentRect];
     CGFloat titleX = (CGRectGetWidth(contentRect)-titleW-imageWH)/2;
-#warning 我自定义
-    //    CGFloat titleX = (CGRectGetWidth(contentRect))/2 - titleW/2;
-    //    if (titleX < 0) {
-    //        titleX = 0;
-    //    }
+    #warning 我自定义
+//    CGFloat titleX = (CGRectGetWidth(contentRect))/2 - titleW/2;
+//    if (titleX < 0) {
+//        titleX = 0;
+//    }
     if (titleW > CGRectGetWidth(contentRect)*0.8) {
         titleW = CGRectGetWidth(contentRect)*0.8;
         CGRect rect = CGRectMake(titleX, 0, titleW , CGRectGetHeight(contentRect));
-        return rect;
+         return rect;
     }
     CGRect rect = CGRectMake(titleX, 0, titleW , CGRectGetHeight(contentRect));
     return rect;
@@ -546,17 +650,17 @@
 }
 #pragma mark 计算标题内容宽度
 - (CGFloat)widthForTitleString:(NSString *)string ContentRect:(CGRect)contentRect{
-    if (string) {
+   if (string) {
         CGSize constraint = contentRect.size;
-        //        NSAttributedString* attributedText = [[NSAttributedString alloc] initWithString:string  attributes:@{NSFontAttributeName: self.titleLabel.font}];
-        NSAttributedString* attributedText = [[NSAttributedString alloc] initWithString:string];
+//        NSAttributedString* attributedText = [[NSAttributedString alloc] initWithString:string  attributes:@{NSFontAttributeName: self.titleLabel.font}];
+       NSAttributedString* attributedText = [[NSAttributedString alloc] initWithString:string];
         CGRect rect = [attributedText boundingRectWithSize:constraint options:NSStringDrawingUsesLineFragmentOrigin context:nil];
         CGSize size = rect.size;
         CGFloat width = MAX(size.width, 30);
         CGFloat imageW = [self imageForState:UIControlStateNormal].size.width;
 
         if (width+imageW > CGRectGetWidth(contentRect)) { // 当标题和图片宽度超过按钮宽度时不能越界
-            return  CGRectGetWidth(contentRect) - imageW;
+           return  CGRectGetWidth(contentRect) - imageW;
         }
         return width*1.2;
     }
@@ -583,23 +687,23 @@
         return CGRectGetHeight(contentRect)/2;
     }
 }
-#pragma mark-:butto的width
-+ (CGFloat)getWidthWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize withImage:(UIImage *)image
+
++ (CGFloat)getWidthWithTitle:(NSString *)title withWidth:(CGFloat)width withFontSize:(CGFloat )fontSize withImage:(UIImage *)image
 {
     CGFloat imageW = image.size.width;
     NSStringDrawingOptions options = NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading;
-    CGSize size = [title boundingRectWithSize:CGSizeMake(MAXFLOAT, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
+    CGSize size = [title boundingRectWithSize:CGSizeMake(width, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
     return size.width+imageW;
 }
-#pragma mark-:butto的height
-+ (CGFloat)getHeightWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize withImage:(UIImage *)image
++ (CGFloat)getHeightWithTitle:(NSString *)title withWidth:(CGFloat)width withFontSize:(CGFloat )fontSize withImage:(UIImage *)image
 {
     CGFloat imageW = image.size.width;
     NSStringDrawingOptions options = NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading;
-    CGSize size = [title boundingRectWithSize:CGSizeMake(MAXFLOAT, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
+    CGSize size = [title boundingRectWithSize:CGSizeMake(width, MAXFLOAT) options:options attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:fontSize]} context:nil].size;
     return size.height+imageW;
 }
 @end
+
 
 @implementation MJAlertView
 #pragma mark-:弹窗按钮
@@ -688,19 +792,21 @@
     NSString *urlStr=[NSString stringWithFormat:@"https://itunes.apple.com/cn/lookup?id=%d",kID];
     NSURL *url=[NSURL URLWithString:urlStr];
     NSData *json = [NSData dataWithContentsOfURL:url];
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
-    NSArray *resultsSub = [dict objectForKey:@"results"];
-
-    //XLog(@"获取App Store版本:%@",resultsSub);
-    NSDictionary *result = [resultsSub objectAtIndex:0];
-    NSString *releaseMsg = [result objectForKey:@"releaseNotes"];
-    //XLog(@"releaseMsg:%@",releaseMsg);
-    double appStore = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
-    if (app_Version < appStore) {
-        releaseNotes(releaseMsg);
-    }else {
-        latestVersion(YES);
+    if (json) {
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
+        NSArray *resultsSub = [dict objectForKey:@"results"];
+        //XLog(@"获取App Store版本:%@",resultsSub);
+        NSDictionary *result = [resultsSub objectAtIndex:0];
+        NSString *releaseMsg = [result objectForKey:@"releaseNotes"];
+        //XLog(@"releaseMsg:%@",releaseMsg);
+        double appStore = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
+        if (app_Version < appStore) {
+            releaseNotes(releaseMsg);
+        }else {
+            latestVersion(YES);
+        }
     }
+
 
 }
 //获取当前版本
@@ -726,267 +832,351 @@
 }
 @end
 
-//上线
-//#define kRootPath @"http://202.109.75.181:9080/"
-//测试
-#define kRootPath @"http://tt.kakacaifu.com/baby_product/"
-//本地
-//#define kRootPath @"http://192.168.50.26/"
-@interface MJHttpManager()
-
-@end
-@implementation MJHttpManager
-/**
- self.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
- */
-+ (void)PostWithUrlString:(NSString *)urlString
-               parameters:(id)parameters
-                  success:(SuccessBlock)successBlock
-                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
-{
-
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-
-
-
-    if (afMediaType) {
-        manager.requestSerializer = [AFJSONRequestSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-
-            NSDictionary *dict = [NSDictionary dictionary];
-            if (callBackJSON) {
-                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                NSLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
-            }
-        }
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //XLog(@"error:%@",error);
-        }
-    }];
-
-}
-/**
- *filePathType:.png,.caf
- *mimeType:@"image/png",audio/caf
- */
-+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
-                          parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType
-                             success:(SuccessBlock)successBlock
-                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
-{
-
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-
-
-
-    if (afMediaType) {
-        manager.requestSerializer = [AFJSONRequestSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"yyyyMMddHHmmss";
-        NSString *outputPath = [NSHomeDirectory() stringByAppendingFormat:@"/Documents/%@", [[formatter stringFromDate:[NSDate date]] stringByAppendingString:filePathType]];
-        [formData appendPartWithFileData:fileData name:@"file" fileName:outputPath mimeType:mimeType];
-    } progress:^(NSProgress * _Nonnull uploadProgress) {
-        float update = uploadProgress.fractionCompleted*100;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            //[WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
-        });
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
-            //[WSProgressHUD dismiss];
-            NSDictionary *dict = [NSDictionary dictionary];
-            if (callBackJSON) {
-                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                successBlock(dict);
-                //XLog(@"MJHttpManagerDict:%@",dict);
-//                //XLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                //XLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
-            }
-        }
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
-            //XLog(@"error:%@",error);
-            //            //[WSProgressHUD dismiss];
-        }
-    }];
-
-
-}
-- (id)mj_JSONObject
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [NSJSONSerialization JSONObjectWithData:[((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [NSJSONSerialization JSONObjectWithData:(NSData *)self options:kNilOptions error:nil];
-    }
-
-    return nil;
-}
-- (NSString *)mj_JSONString
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return (NSString *)self;
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [[NSString alloc] initWithData:(NSData *)self encoding:NSUTF8StringEncoding];
-    }
-
-    return [[NSString alloc] initWithData:[self mj_JSONData] encoding:NSUTF8StringEncoding];
-}
-#pragma mark - 转换为JSON
-- (NSData *)mj_JSONData
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return (NSData *)self;
-    }
-
-    return [NSJSONSerialization dataWithJSONObject:[self mj_JSONObject] options:kNilOptions error:nil];
-}
-//[UIView animateWithDuration:1 animations:^{
+////上线
+////#define kRootPath @"http://202.109.75.181:9080/"
+////测试
+//#define kRootPath @"http://tt.kakacaifu.com/baby_product/"
+////本地
+////#define kRootPath @"http://192.168.50.26/"
+//@interface MJHttpManager()
 //
-//} completion:^(BOOL finished) {
+//@end
+//@implementation MJHttpManager
+///**
+// self.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+// */
+//+ (void)PostWithUrlString:(NSString *)urlString
+//               parameters:(id)parameters
+//                  success:(SuccessBlock)successBlock
+//                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+//{
+////    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+////        [WSProgressHUD dismiss];
+////    });
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    if (afMediaType) {
+//        manager.requestSerializer = [AFJSONRequestSerializer serializer];
+//        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+//    }
+//    NSLog(@"urlString:%@---parameters:%@",[NSString stringWithFormat:@"%@%@",kRootPath,urlString],parameters);
+//    // [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+//    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//        if (successBlock) {
+////            [WSProgressHUD dismiss];
+////            NSDictionary *dict = [NSDictionary dictionary];
+//            if (callBackJSON) {
+////                dict = [responseObject mj_JSONString];
+//                successBlock([responseObject mj_JSONString]);
+//                NSLog(@"responseObjectDict:%@",[responseObject mj_JSONObject]);
+//                NSLog(@"responseObjectJSON:%@",[responseObject mj_JSONString]);
+//            }else {
+//                NSLog(@"responseObject:%@",responseObject);
+//                successBlock(responseObject);
+//            }
+//        }
+//    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//        if (failureBlock) {
+//            failureBlock(error);
+//            NSLog(@"error:%@",error);
+//            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"当前无可用网络！请检查您的网络连接！"];
+//        }
+//    }];
 //
-//}];
-/**/
-/**
- *  异步网络(parameters相同)
- */
-+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
-                    parameters:(id)parameters
-                       success:(SuccessBlock)successBlock
-                       failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion
-{
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//}
+//+ (void)PostWithESUrlString:(NSString *)urlString
+//               parameters:(id)parameters
+//                  success:(SuccessBlock)successBlock
+//                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+//{
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    NSLog(@"urlString:%@",[NSString stringWithFormat:@"%@",urlString]);
+//    if (afMediaType) {
+//        manager.requestSerializer = [AFJSONRequestSerializer serializer];
+//        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+//    }
+//    [manager POST:[NSString stringWithFormat:@"%@",urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//        if (successBlock) {
+//            [WSProgressHUD dismiss];
+//            NSDictionary *dict = [NSDictionary dictionary];
+//            if (callBackJSON) {
+//                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//                successBlock(dict);
+//                NSLog(@"MJHttpManagerDict:%@",dict);
+//                NSLog(@"json:%@",[responseObject mj_JSONString]);
+//            }else {
+//                NSLog(@"responseObject:%@",responseObject);
+//                successBlock(responseObject);
+//            }
+//        }
+//    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//        if (failureBlock) {
+//            failureBlock(error);
+//            NSLog(@"error:%@",error);
+//            [WSProgressHUD dismiss];
+//        }
+//    }];
+//
+//}
+///**
+// *filePathType:.png,.caf
+// *mimeType:@"image/png",audio/caf
+// */
+//+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
+//parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType progress:(ProgressBlock)progress
+//   success:(SuccessBlock)successBlock
+//   failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+//{
+//
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//
+//    NSLog(@"urlString:%@",urlString);
+//
+//    if (afMediaType) {
+//        manager.requestSerializer = [AFJSONRequestSerializer serializer];
+//        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+//    }
+//    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+//        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+//        formatter.dateFormat = @"yyyyMMddHHmmss";
+//        NSString *outputPath = [NSHomeDirectory() stringByAppendingFormat:@"/Documents/%@", [[formatter stringFromDate:[NSDate date]] stringByAppendingString:filePathType]];
+//        [formData appendPartWithFileData:fileData name:@"file" fileName:outputPath mimeType:mimeType];
+//    } progress:^(NSProgress * _Nonnull uploadProgress) {
+//        float update = uploadProgress.fractionCompleted*100;
+//        if (progress) {
+//            progress(update);
+//        }
+////        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+////            NSLog(@"update:%f",update);
+////            [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
+////        });
+//    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//        if (successBlock) {
+//            NSDictionary *dict = [NSDictionary dictionary];
+//            if (callBackJSON) {
+//                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//                successBlock(dict);
+//                NSLog(@"MJHttpManagerDict:%@",dict);
+//                NSLog(@"json:%@",[responseObject mj_JSONString]);
+//            }else {
+//                NSLog(@"responseObject:%@",responseObject);
+//                successBlock(responseObject);
+//            }
+//            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
+//        }
+//    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//        if (failureBlock) {
+//            failureBlock(error);
+//            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
+//            NSLog(@"error:%@",error);
+////            [WSProgressHUD dismiss];
+//        }
+//    }];
+//
+//
+//}
+////[UIView animateWithDuration:1 animations:^{
+////
+////} completion:^(BOOL finished) {
+////
+////}];
+///**/
+///**
+// *  异步网络(parameters相同)
+// */
+//+ (void)GetAsyncDateWithUrlString:(NSString *)urlString withArray:(NSArray *)array
+//                    parameters:(id)parameters
+//                       success:(SuccessBlock)successBlock
+//                       failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion
+//{
+//    NSLog(@"urlString:%@",urlString);
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    manager.requestSerializer = [AFJSONRequestSerializer serializer];
+//    manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+//    //使用GCD的信号量 dispatch_semaphore_t 创建同步请求
+//    dispatch_group_t group =dispatch_group_create();
+//    dispatch_queue_t globalQueue=dispatch_get_global_queue(0, 0);
+//    dispatch_semaphore_t semaphore= dispatch_semaphore_create(0);
+//    dispatch_group_async(group, globalQueue, ^{
+//        for (int i = 0; i<array.count; i++) {
+//            NSDictionary *dict = @{
+//                                   @"date":array[i]
+//                                   };
+//            NSLog(@"dictPostAsyncDateWithUrlString:%@",dict);
+//            [manager GET:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:dict progress:^(NSProgress * _Nonnull downloadProgress) {
+//
+//            } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//                NSLog(@"HomeresponseObject:%@",responseObject);
+//                if (successBlock) {
+//                    NSDictionary *dict = [NSDictionary dictionary];
+//                    if (callBackJSON) {
+//                        dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//                        successBlock(dict);
+//                        NSLog(@"MJHttpManagerDict:%@",dict);
+//                        NSLog(@"json:%@",[responseObject mj_JSONString]);
+//                    }else {
+//                        NSLog(@"responseObject:%@",responseObject);
+//                        successBlock(responseObject);
+//                    }
+//                }
+//                dispatch_semaphore_signal(semaphore);
+//            } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//                [WSProgressHUD dismiss];
+//                NSLog(@"error:%@",error);
+//                dispatch_semaphore_signal(semaphore);
+//            }];
+//            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+//        }
+//
+//    });
+//
+//    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [WSProgressHUD dismiss];
+//            completion(YES);
+//        });
+//    });
+//}
+///**
+// *  异步网络(parameters相同)
+// */
+//+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
+//                    parameters:(id)parameters
+//                       success:(SuccessBlock)successBlock
+//                       failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion
+//{
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    NSLog(@"urlString:%@",urlString);
+//    //使用GCD的信号量 dispatch_semaphore_t 创建同步请求
+//    dispatch_group_t group =dispatch_group_create();
+//    dispatch_queue_t globalQueue=dispatch_get_global_queue(0, 0);
+//    dispatch_semaphore_t semaphore= dispatch_semaphore_create(0);
+//    dispatch_group_async(group, globalQueue, ^{
+//        for (int i = 0; i<array.count; i++) {
+//            NSDictionary *dict = @{
+//                                   @"id":array[i]
+//                                   };
+//            NSLog(@"dict:%@",dict);
+//            [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:dict progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//                XLog(@"HomeresponseObject:%@",responseObject);
+//                if (successBlock) {
+//                    NSDictionary *dict = [NSDictionary dictionary];
+//                    if (callBackJSON) {
+//                        dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//                        successBlock(dict);
+//                        NSLog(@"MJHttpManagerDict:%@",dict);
+//                        NSLog(@"json:%@",[responseObject mj_JSONString]);
+//                    }else {
+//                        NSLog(@"responseObject:%@",responseObject);
+//                        successBlock(responseObject);
+//                    }
+//                }
+//                dispatch_semaphore_signal(semaphore);
+//            } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//                [WSProgressHUD dismiss];
+//                dispatch_semaphore_signal(semaphore);
+//            }];
+//            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+//        }
+//
+//    });
+//
+//    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [WSProgressHUD dismiss];
+//            completion(YES);
+//        });
+//    });
+//}
+//+ (void)GetWithUrlString:(NSString *)urlString
+//              parameters:(id)parameters
+//                 success:(SuccessBlock)successBlock
+//                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
+//{
+//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+//    NSLog(@"urlString:%@---parameters:%@",urlString,parameters);
+//    if (afMediaType) {
+//        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+//    }
+//    [manager GET:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+//        if (successBlock) {
+//            NSArray *dict = [NSArray array];
+//            if (callBackJSON) {
+//                dict = [responseObject mj_JSONObject];
+//                successBlock(dict);
+//                NSLog(@"MJHttpManagerDict:%@",dict);
+//                NSLog(@"json:%@",[responseObject mj_JSONString]);
+//            }else {
+//                NSLog(@"responseObject:%@",responseObject);
+//                successBlock(responseObject);
+//            }
+//        }
+//        [WSProgressHUD dismiss];
+//    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+//        if (failureBlock) {
+//            failureBlock(error);
+//            [WSProgressHUD dismiss];
+//        }
+//
+//    }];
+//}
+//@end
 
-    //使用GCD的信号量 dispatch_semaphore_t 创建同步请求
-    dispatch_group_t group =dispatch_group_create();
-    dispatch_queue_t globalQueue=dispatch_get_global_queue(0, 0);
-    dispatch_semaphore_t semaphore= dispatch_semaphore_create(0);
-    dispatch_group_async(group, globalQueue, ^{
-        for (int i = 0; i<array.count; i++) {
-            NSDictionary *dict = @{
-                                   @"id":array[i]
-                                   };
-            [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:dict progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-                //XLog(@"HomeresponseObject:%@",responseObject);
-                if (successBlock) {
-                    NSDictionary *dict = [NSDictionary dictionary];
-                    if (callBackJSON) {
-                        dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                        successBlock(dict);
-                        //XLog(@"MJHttpManagerDict:%@",dict);
-                        //XLog(@"json:%@",[responseObject mj_JSONString]);
-                    }else {
-                        //XLog(@"responseObject:%@",responseObject);
-                        successBlock(responseObject);
-                    }
-                }
-                dispatch_semaphore_signal(semaphore);
-            } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-                //[WSProgressHUD dismiss];
-                dispatch_semaphore_signal(semaphore);
-            }];
-            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-        }
-
-    });
-
-    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            //[WSProgressHUD dismiss];
-            completion(YES);
-        });
-    });
-
-}
-+ (void)GetWithUrlString:(NSString *)urlString
-              parameters:(id)parameters
-                 success:(SuccessBlock)successBlock
-                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-{
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    if (afMediaType) {
-        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager GET:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-            NSArray *dict = [NSArray array];
-            if (callBackJSON) {
-                dict = [responseObject mj_JSONObject];
-                successBlock(dict);
-                //XLog(@"MJHttpManagerDict:%@",dict);
-                //XLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                //XLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
-            }
-        }
-        //[WSProgressHUD dismiss];
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //[WSProgressHUD dismiss];
-        }
-
-    }];
-}
-@end
-
-@implementation MJMutableAttributedString
-#pragma mark-代理:超链接
-+(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString
-{
-
-    NSMutableAttributedString *attaStr = [[NSMutableAttributedString alloc] initWithString:defaultString];
-    NSMutableAttributedString *linkStr = [[NSMutableAttributedString alloc] initWithString:urlStr];
-    [linkStr addAttributes:@{NSLinkAttributeName: [NSURL URLWithString:urlStr]} range:NSMakeRange(0, urlStr.length)];
-    [attaStr appendAttributedString:linkStr];
-    return attaStr;
-}
-
-
-#pragma mark-:label斜线
-+(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString
-{
-    return [[NSMutableAttributedString alloc] initWithString:defaultString attributes:@{NSStrikethroughStyleAttributeName : @(NSUnderlineStyleSingle)}];
-}
-#pragma mark-:字体颜色变换
-+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeColor:(UIColor *)color forCharStr:(NSString *)charStr
-{
-    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc]initWithString:defaultString];
-    [attrStr  addAttribute:NSForegroundColorAttributeName value:color range:[defaultString rangeOfString:charStr]];
-    return attrStr;
-}
-#pragma mark-:字体大小变换
-+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeFontNumber:(CGFloat )fontNumber forCharStr:(NSString *)charStr
-{
-    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc]initWithString:defaultString];
-    [attrStr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:fontNumber] range:[defaultString rangeOfString:charStr]];
-    return attrStr;
-}
-@end
+//@implementation MJMutableAttributedString
+//#pragma mark-:Label行间距
+//+(NSMutableAttributedString *)setlineSpacing:(CGFloat)lineSpacingValue withText:(NSString*)str withFontSize:(CGFloat )fontSize withAlignment:(NSTextAlignment)alignment
+//{
+//    NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
+//    paraStyle.lineBreakMode = NSLineBreakByCharWrapping;
+//    paraStyle.alignment = alignment;
+//    paraStyle.lineSpacing = lineSpacingValue; //设置行间距
+//    paraStyle.hyphenationFactor = 1.0;
+//    paraStyle.firstLineHeadIndent = 0.0;
+//    paraStyle.paragraphSpacingBefore = 0.0;
+//    paraStyle.headIndent = 0;
+//    paraStyle.tailIndent = 0;
+//    //设置字间距 NSKernAttributeName:@1.5f
+//    NSDictionary *dic = @{NSFontAttributeName:[UIFont systemFontOfSize:fontSize],NSParagraphStyleAttributeName:paraStyle, NSKernAttributeName:@1.5f                        };
+//    NSAttributedString *attributeStr = [[NSAttributedString alloc] initWithString:str attributes:dic];
+//    return attributeStr;
+//}
+//#pragma mark-代理:超链接
+//+(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString
+//{
+//
+//    NSMutableAttributedString *attaStr = [[NSMutableAttributedString alloc] initWithString:defaultString];
+//    NSMutableAttributedString *linkStr = [[NSMutableAttributedString alloc] initWithString:urlStr];
+//    [linkStr addAttributes:@{NSLinkAttributeName: [NSURL URLWithString:urlStr]} range:NSMakeRange(0, urlStr.length)];
+//    [attaStr appendAttributedString:linkStr];
+//    return attaStr;
+//}
+//
+//
+//#pragma mark-:label斜线
+//+(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString
+//{
+//    return [[NSMutableAttributedString alloc] initWithString:defaultString attributes:@{NSStrikethroughStyleAttributeName : @(NSUnderlineStyleSingle)}];
+//}
+//#pragma mark-:字体颜色变换
+//+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeColor:(UIColor *)color forCharStr:(NSString *)charStr
+//{
+//    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc]initWithString:defaultString];
+//    [attrStr  addAttribute:NSForegroundColorAttributeName value:color range:[defaultString rangeOfString:charStr]];
+//    return attrStr;
+//}
+//#pragma mark-:字体大小变换
+//+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeFontNumber:(CGFloat )fontNumber forCharStr:(NSString *)charStr
+//{
+//    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc]initWithString:defaultString];
+//    [attrStr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:fontNumber] range:[defaultString rangeOfString:charStr]];
+//    return attrStr;
+//}
+//@end
 @interface MJRefreshHF()
 
 @end
@@ -1014,8 +1204,8 @@
         completion();
     }];
     //    normalFooter.frame = CGRectMake(CGRectGetMinX(scrollView.mj_footer.frame), CGRectGetMinY(scrollView.mj_footer.frame), scrollView.mj_footer.frame.size.width, 0);
-    normalFooter.hidden = YES;
     scrollView.mj_footer = normalFooter;
+    normalFooter.hidden = YES;
 }
 #pragma mark---:mj_footer隐藏
 +(void)mjRefreshFooterHiddenInScrollView:(UIScrollView *)scrollView
@@ -1033,11 +1223,13 @@
 {
 
     [scrollView.mj_header endRefreshing];
-    scrollView.mj_header.hidden = NO;
-    scrollView.mj_footer.hidden = NO;
-    if (count < 10) {
+//    scrollView.mj_header.hidden = NO;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        scrollView.mj_footer.hidden = NO;
+    });
+    if (count < 15) {
         scrollView.mj_footer.state = MJRefreshStateNoMoreData;
-    }else if (count == 10)
+    }else if (count ==15)
     {
         [scrollView.mj_footer endRefreshing];
     }
@@ -1065,7 +1257,6 @@
 {
     scrollView.mj_header.hidden = YES;
     scrollView.mj_footer.hidden = YES;
-
 }
 #pragma mark---:没有数据,显示占位符图片
 + (void)emptyDataSet:(UIScrollView *)scrollView y:(CGFloat )y{
@@ -1073,29 +1264,32 @@
     UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 75, 54)];
     UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, kUIScreen.size.width, 17)];
     for (id obj in scrollView.subviews) {
-        if ([obj isKindOfClass:[UIImageView class]]) {
+//        if ([obj isKindOfClass:[UIImageView class]]) {
+
             UIImageView *iv = (UIImageView *)obj;
             if (iv.tag != 1000) {
                 imageView.image = image;
                 imageView.tag = 1000;
-                imageView.center = CGPointMake(scrollView.center.x, y);
+                imageView.center = CGPointMake(([UIScreen mainScreen].bounds.size.width)/2, y);
                 [scrollView addSubview:imageView];
                 label.tag = 1001;
                 label.text = @"暂无数据";
                 label.textAlignment = NSTextAlignmentCenter;
                 label.textColor = kLabel102Color;
                 label.font = [UIFont systemFontOfSize:14];
-                label.center = CGPointMake(scrollView.center.x, CGRectGetMaxY(imageView.frame)+15);
+                label.center = CGPointMake(imageView.center.x, CGRectGetMaxY(imageView.frame)+15);
                 [scrollView addSubview:label];
+                NSLog(@"imageView:%@---%f",NSStringFromCGRect(imageView.frame),scrollView.center.x);
             }
-        }
+        return;
+//        }
     }
 }
 #pragma mark---:删除,显示占位符图片
 + (void)clearEmptyDataSet:(UIScrollView *)scrollView
 {
     for (id obj in scrollView.subviews) {
-        if ([obj isKindOfClass:[UIImageView class]]) {
+//        if ([obj isKindOfClass:[UIImageView class]]) {
             //XLog(@"obj:%@",obj);
             UIImageView *iv = (UIImageView *)obj;
             UILabel *label = (UILabel *)obj;
@@ -1104,7 +1298,7 @@
             }else if (label.tag == 1001) {
                 [label removeFromSuperview];
             }
-        }
+//        }
     }
 }
 
@@ -1499,7 +1693,7 @@
     switch (yMinDMSStyle) {
         case YMDMinS:
         {
-            [formatter setDateFormat:@"yyyy-MM-dd hh:mm:ss"];
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
         }
             break;
         case YMD:
@@ -1519,7 +1713,7 @@
             break;
         case HM:
         {
-            [formatter setDateFormat:@" hh:mm"];
+            [formatter setDateFormat:@" HH:mm"];
         }
             break;
         case Y:
@@ -1535,7 +1729,7 @@
 
         default:
         {
-            [formatter setDateFormat:@"dd hh:mm"];
+            [formatter setDateFormat:@"dd HH:mm"];
         }
             break;
     }
@@ -1644,7 +1838,7 @@
 + (int)compareOneDay:(NSDate *)oneDay withAnotherDay:(NSDate *)anotherDay
 {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd hh:mm:ss"];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
     NSString *oneDayStr = [dateFormatter stringFromDate:oneDay];
     NSString *anotherDayStr = [dateFormatter stringFromDate:anotherDay];
     NSDate *dateA = [dateFormatter dateFromString:oneDayStr];
@@ -1674,14 +1868,32 @@
     //////XLog(@"Both dates are the same");
 
 }
+#pragma mark-代理:当前时间的星期几
++ (NSString *)getCurrentWeekDayDate:(NSDate *)date
+{
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents *comp = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitWeekday
+                                         fromDate:date];
+    // 得到星期几
+    // 1(星期天) 2(星期二) 3(星期三) 4(星期四) 5(星期五) 6(星期六) 7(星期天)
+//    NSArray *arabicNumeralsArray = @[@"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9",@"0"];
+    NSArray *chineseNumeralsArray = @[@"日",@"一",@"二",@"三",@"四",@"五",@"六"];
+    NSInteger weekDay = [comp weekday];
 
-#pragma mark-:当前时间
-+ (NSString *)getCurrentYMDMS:(YMDMS)yMinDMSStyle{
-    NSDateFormatter *formatter=[[NSDateFormatter alloc]init];
+    return chineseNumeralsArray[weekDay -1];
+}
++(long)backGroundWithStr:(NSString *)timestamp withYMDMS:(YMDMS)yMinDMSStyle
+{
+   NSDateFormatter *formatter=[[NSDateFormatter alloc]init];
     switch (yMinDMSStyle) {
         case YMDMinS:
         {
-            [formatter setDateFormat:@"yyyy-MM-dd hh:mm:ss"];
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        }
+            break;
+        case YMDMin:
+        {
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm"];
         }
             break;
         case YMD:
@@ -1701,7 +1913,7 @@
             break;
         case HM:
         {
-            [formatter setDateFormat:@" hh:mm"];
+            [formatter setDateFormat:@" HH:mm"];
         }
             break;
         case Y:
@@ -1717,7 +1929,62 @@
 
         default:
         {
-            [formatter setDateFormat:@"dd hh:mm"];
+            [formatter setDateFormat:@"dd HH:mm"];
+        }
+            break;
+    }
+    NSDate *beginDate=[formatter dateFromString:timestamp];
+    long dayZeroTime = [beginDate timeIntervalSince1970]*1000;
+    return dayZeroTime;
+}
+#pragma mark-:当前时间
++ (NSString *)getCurrentYMDMS:(YMDMS)yMinDMSStyle{
+    NSDateFormatter *formatter=[[NSDateFormatter alloc]init];
+    switch (yMinDMSStyle) {
+        case YMDMinS:
+        {
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        }
+            break;
+        case YMDMin:
+        {
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm"];
+        }
+            break;
+        case YMD:
+        {
+            [formatter setDateFormat:@"yyyy-MM-dd"];
+        }
+            break;
+        case YM:
+        {
+            [formatter setDateFormat:@"yyyy-MM"];
+        }
+            break;
+        case MD:
+        {
+            [formatter setDateFormat:@"MM-dd"];
+        }
+            break;
+        case HM:
+        {
+            [formatter setDateFormat:@" HH:mm"];
+        }
+            break;
+        case Y:
+        {
+            [formatter setDateFormat:@"yyyy"];
+        }
+            break;
+        case M:
+        {
+            [formatter setDateFormat:@"MM"];
+        }
+            break;
+
+        default:
+        {
+            [formatter setDateFormat:@"dd HH:mm"];
         }
             break;
     }
@@ -1754,7 +2021,7 @@
     switch (yMinDMSStyle) {
         case YMDMinS:
         {
-            [formatter setDateFormat:@"yyyy-MM-dd hh:mm:ss"];
+            [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
         }
             break;
         case YMD:
@@ -1774,7 +2041,7 @@
             break;
         case HM:
         {
-            [formatter setDateFormat:@"hh:mm"];
+            [formatter setDateFormat:@"HH:mm"];
         }
             break;
         case Y:
@@ -1790,7 +2057,7 @@
 
         default:
         {
-            [formatter setDateFormat:@"dd hh:mm"];
+            [formatter setDateFormat:@"dd HH:mm"];
         }
             break;
     }
@@ -1922,6 +2189,11 @@
 {
     [[UserDefaultsHelper userDefaultManager] setValue:headimgValue forKey:@"headimg"];
 }
++(NSString *)readHeadimg
+{
+    NSString *headimg = [[UserDefaultsHelper userDefaultManager] objectForKey:@"headimg"];
+    return headimg;
+}
 +(void)saveNickName:(id)nickName value:(NSString *)nickNameValue
 {
     [[UserDefaultsHelper userDefaultManager] setValue:nickNameValue forKey:@"nickname"];
@@ -1981,11 +2253,7 @@
 {
     [[UserDefaultsHelper userDefaultManager] setValue:isAgreementValue forKey:@"isAgreement"];
 }
-+(NSString *)readHeadimg
-{
-    NSString *headimg = [[UserDefaultsHelper userDefaultManager] objectForKey:@"headimg"];
-    return headimg;
-}
+
 +(NSString *)readSign
 {
     return [[UserDefaultsHelper userDefaultManager] objectForKey:@"sign"];
@@ -2002,9 +2270,57 @@
 {
     [[UserDefaultsHelper userDefaultManager] setValue:userAccountValue forKey:@"userAccount"];
 }
++(NSString *)readPWS
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"psw"];
+}
++(void)savesPSW:(id)pws value:(NSString *)pws
+{
+    [[UserDefaultsHelper userDefaultManager] setValue:pws forKey:@"psw"];
+}
 +(NSString *)readQQOpenID
 {
     NSString *qqOpenID = [[UserDefaultsHelper userDefaultManager] objectForKey:@"qqOpenID"];
     return qqOpenID;
+}
++(NSString *)readQQ
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"qq"];
+}
++(void)savesQQ:(id)qq value:(NSString *)qq
+{
+     [[UserDefaultsHelper userDefaultManager] setValue:qq forKey:@"qq"];
+}
++(NSString *)readUserName
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"userName"];
+}
++(void)savesUserName:(id)userName value:(NSString *)userName
+{
+     [[UserDefaultsHelper userDefaultManager] setValue:userName forKey:@"userName"];
+}
++(NSString *)readUserRealname
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"userRealname"];
+}
++(void)savesUserRealname:(id)userRealname value:(NSString *)userRealname
+{
+     [[UserDefaultsHelper userDefaultManager] setValue:userRealname forKey:@"userRealname"];
+}
++(NSString *)readUserMail
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"userMail"];
+}
++(void)savesUserMail:(id)userMail value:(NSString *)userMail
+{
+     [[UserDefaultsHelper userDefaultManager] setValue:userMail forKey:@"userMail"];
+}
++(NSString *)readDeviceToken
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"deviceToken"];
+}
++(void)savesDeviceToken:(id)deviceToken value:(NSString *)deviceToken
+{
+    [[UserDefaultsHelper userDefaultManager] setValue:deviceToken forKey:@"deviceToken"];
 }
 @end

@@ -83,14 +83,15 @@ static CGFloat itemMargin = 5;
     self.view.backgroundColor = [UIColor whiteColor];
     self.navigationItem.title = _model.name;
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:tzImagePickerVc.cancelBtnTitleStr style:UIBarButtonItemStylePlain target:tzImagePickerVc action:@selector(cancelButtonClick)];
+    self.navigationItem.leftBarButtonItem =  [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@""] style:UIBarButtonItemStyleDone target:self action:nil];
     if (tzImagePickerVc.navLeftBarButtonSettingBlock) {
-        UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        leftButton.frame = CGRectMake(0, 0, 44, 44);
-        [leftButton addTarget:self action:@selector(navLeftBarButtonClick) forControlEvents:UIControlEventTouchUpInside];
-        tzImagePickerVc.navLeftBarButtonSettingBlock(leftButton);
-        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:leftButton];
+//        UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeCustom];
+//        leftButton.frame = CGRectMake(0, 0, 44, 44);
+//        [leftButton addTarget:self action:@selector(navLeftBarButtonClick) forControlEvents:UIControlEventTouchUpInside];
+//        tzImagePickerVc.navLeftBarButtonSettingBlock(leftButton);
+//        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:leftButton];
     } else if (tzImagePickerVc.childViewControllers.count) {
-        [tzImagePickerVc.childViewControllers firstObject].navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+//        [tzImagePickerVc.childViewControllers firstObject].navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
     }
     _showTakePhotoBtn = _model.isCameraRoll && ((tzImagePickerVc.allowTakePicture && tzImagePickerVc.allowPickingImage) || (tzImagePickerVc.allowTakeVideo && tzImagePickerVc.allowPickingVideo));
     // [self resetCachedAssets];

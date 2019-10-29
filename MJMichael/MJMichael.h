@@ -9,8 +9,17 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 NS_ASSUME_NONNULL_BEGIN
+//上线
+//#define kRootPath @"http://cloud.ssnews.com.cn:9080/"
+//测试
+#define kRootPath @"http://112.27.250.251:8093/"
+//#define kRootPath  @"http://192.168.100.24:8085/"
 
+//本地
+//#define kRootPath @"http://192.168.1.150:8088/"
 @interface MJMichael : NSObject
++ (UIColor *) colorWithHexString: (NSString *)color;
++(void)mjAppearNaviBar:(UIViewController *)vc color:(UIColor *)color;
 /**
  *隐藏导航栏
  */
@@ -22,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *设置导航栏背景色
  */
-+(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color;
++(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color withAlpha:(CGFloat )alpha;
 /**
  *statusBarStyleColor
  */
@@ -70,6 +79,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface MJLabel : UILabel
++(NSAttributedString *)setIndexHeadSpacing:(CGFloat)indexHeadSpacingValue withText:(NSString*)str withFont:(CGFloat )font withAlignment:(NSTextAlignment)alignment;
++ (CGFloat)getHeightByWidth:(CGFloat)width title:(NSString *)title font:(UIFont *)font;
 /**
  *width:宽度
  *title:内容
@@ -81,19 +92,13 @@ NS_ASSUME_NONNULL_BEGIN
  *title:内容
  *fontSize:label的font
  */
-+ (CGFloat)getWidthWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize;
++ (CGFloat)getWidthWithTitle:(NSString *)title withWidth:(CGFloat )width withFontSize:(CGFloat )fontSize;
 /**
  *title:内容
  *fontSize:label的font
  */
 + (CGFloat)getHeightWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize;
-/**
- *lineSpacingValue:label行间距
- *fontSize:label的font
- *number:字间距
- *alignment:label朝向
- */
-+(NSAttributedString *)setlineSpacing:(CGFloat)lineSpacingValue withText:(NSString*)str withFontSize:(CGFloat )fontSize withAlignment:(NSTextAlignment)alignment;
+
 /**label行间距---height
  *str:内容
  *width:宽度
@@ -125,8 +130,10 @@ typedef enum {
     imageBottom,    // 图片下 标题上
     colorCreatImageBottom,    // 图片下 标题上
     imageRight,     // 图片右 标题左
-    imageRightSide,//图片在右边
-    imageBottomNone,//无图片
+    imageRightSide,
+    imageEdgeRight,
+    imageBottomNone,
+    imageBottomLine,
     imageNone
 } ImageStyle;
 
@@ -138,14 +145,14 @@ typedef enum {
  *fontSize:button的font
  *image:button上的图片
  */
-+ (CGFloat)getWidthWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize withImage:(UIImage *)image;
++ (CGFloat)getWidthWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize withWidth:(CGFloat)width withImage:(UIImage *)image;
 /**
  *title:button的内容
  *fontSize:button的font
  *image:button上的图片
  */
 + (CGFloat)getHeightWithTitle:(NSString *)title withFontSize:(CGFloat )fontSize withImage:(UIImage *)image;
-
++ (CGFloat)getWidthWithTitle:(NSString *)title withWidth:(CGFloat)width withFontSize:(CGFloat )fontSize withImage:(UIImage *)image;
 @end
 typedef void (^Title)(id title);
 typedef void (^Message)(id message);
@@ -195,65 +202,83 @@ typedef void (^UpdateShowBlock)(BOOL latestVersion);
 +(void)timerAction;
 @end
 
-typedef void (^SuccessBlock)(id obj);
-typedef void (^FailureBlock)(NSError *error);
-typedef void (^Completion)(BOOL finished);
-//completion:<#^(BOOL finished)completion#>]  completion:(void (^ __nullable)(BOOL finished))completion
+//typedef void (^SuccessBlock)(id obj);
+//typedef void (^FailureBlock)(NSError *error);
+//typedef void (^Completion)(BOOL finished);
+////completion:<#^(BOOL finished)completion#>]  completion:(void (^ __nullable)(BOOL finished))completion
+//
+//@interface MJHttpManager : NSObject
+//
+//typedef void (^SuccessBlock)(id obj);
+//typedef void (^ProgressBlock)(float progress);
+//typedef void (^FailureBlock)(NSError *error);
+//typedef void (^Completion)(BOOL finished);
+// //completion:<#^(BOOL finished)completion#>]  completion:(void (^ __nullable)(BOOL finished))completion
+//
+///**
+// *  post请求
+// */
+//+ (void)PostWithUrlString:(NSString *)urlString
+//               parameters:(id)parameters
+//                  success:(SuccessBlock)successBlock
+//                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
+///**
+// *  post表单上传附件
+// *filePathType:.png,.caf
+// *mimeType:@"image/png",audio/caf
+// */
+//+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
+//                          parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType progress:(ProgressBlock)progress
+//                             success:(SuccessBlock)successBlock
+//                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
+//+ (void)PostWithESUrlString:(NSString *)urlString
+//                 parameters:(id)parameters
+//                    success:(SuccessBlock)successBlock
+//                    failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
+///**
+// *  get请求
+// */
+//+ (void)GetWithUrlString:(NSString *)urlString
+//               parameters:(id)parameters
+//                  success:(SuccessBlock)successBlock
+//                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
+///**
+// *  异步网络(parameters相同)
+// */
+//+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
+//                    parameters:(id)parameters success:(SuccessBlock)successBlock failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion;
+//+ (void)GetAsyncDateWithUrlString:(NSString *)urlString withArray:(NSArray *)array
+//                        parameters:(id)parameters
+//                           success:(SuccessBlock)successBlock
+//                           failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion;
+//@end
 
-@interface MJHttpManager : NSObject
-
-@property (nonatomic, copy) SuccessBlock successBlock;
-@property (nonatomic, copy) FailureBlock failureBlock;
-@property(nonatomic,strong) NSArray *tempURL;
-/**
- *  post请求
- */
-+ (void)PostWithUrlString:(NSString *)urlString
-               parameters:(id)parameters
-                  success:(SuccessBlock)successBlock
-                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  post表单上传附件
- *filePathType:.png,.caf
- *mimeType:@"image/png",audio/caf
- */
-+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
-                          parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType
-                             success:(SuccessBlock)successBlock
-                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  get请求
- */
-+ (void)GetWithUrlString:(NSString *)urlString
-              parameters:(id)parameters
-                 success:(SuccessBlock)successBlock
-                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  异步网络(parameters相同)
- */
-+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
-                    parameters:(id)parameters success:(SuccessBlock)successBlock failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion;
-@end
-
-@interface MJMutableAttributedString : NSObject
-/**
- *defaultString:内容
- *urlStr:链接
- */
-+(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString;
-/**
- *label删除线
- */
-+(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString;
-/**
- *字体颜色变换
- */
-+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeColor:(UIColor *)color forCharStr:(NSString *)charStr;
-/**
- *字体大小变换
- */
-+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeFontNumber:(CGFloat )fontNumber forCharStr:(NSString *)charStr;
-@end
+//@interface MJMutableAttributedString : NSObject
+///**
+// *lineSpacingValue:label行间距
+// *fontSize:label的font
+// *number:字间距
+// *alignment:label朝向
+// */
+//+(NSMutableAttributedString *)setlineSpacing:(CGFloat)lineSpacingValue withText:(NSString*)str withFontSize:(CGFloat )fontSize withAlignment:(NSTextAlignment)alignment;
+///**
+// *defaultString:内容
+// *urlStr:链接
+// */
+//+(NSMutableAttributedString *)openUrlString:(NSString *)urlStr withDefaultString:(NSString *)defaultString;
+///**
+// *label删除线
+// */
+//+(NSMutableAttributedString *)underlineStyleSingleDefaultString:(NSString *)defaultString;
+///**
+// *字体颜色变换
+// */
+//+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeColor:(UIColor *)color forCharStr:(NSString *)charStr;
+///**
+// *字体大小变换
+// */
+//+(NSMutableAttributedString *)defaultString:(NSString *)defaultString changeFontNumber:(CGFloat )fontNumber forCharStr:(NSString *)charStr;
+//@end
 
 typedef void (^Completion)(BOOL finished);
 typedef void (^MJRefreshHFComponentBlock)(void);
@@ -374,6 +399,7 @@ typedef enum{
      *年月日时分
      */
     YMDMinS  = 0,
+    YMDMin,
     /**
      *年月日时分
      */
@@ -389,6 +415,10 @@ typedef enum{
     DMinS,//日时分
 }YMDMS;
 @interface TimeHelper : NSObject
+//+ (NSString *)getCurrentTime;
++(long)backGroundWithStr:(NSString *)timestamp withYMDMS:(YMDMS)yMinDMSStyle;
+#pragma mark-代理:当前时间的星期几
++ (NSString *)getCurrentWeekDayDate:(NSDate *)date;
 /**
  *当前月多少天
  */
@@ -497,6 +527,17 @@ typedef void (^Completion)(BOOL finished);
 +(void)savesSign:(id)sign value:(NSString *)signValue;
 +(NSString *)readUserAccount;
 +(void)savesUserAccount:(id)userAccount value:(NSString *)userAccountValue;
++(NSString *)readPWS;
++(void)savesPSW:(id)pws value:(NSString *)pws;
++(NSString *)readQQ;
++(void)savesQQ:(id)qq value:(NSString *)qq;
++(NSString *)readUserName;
++(void)savesUserName:(id)userName value:(NSString *)userName;
++(NSString *)readUserRealname;
++(void)savesUserRealname:(id)userRealname value:(NSString *)userRealname;
++(NSString *)readUserMail;
++(void)savesUserMail:(id)userMail value:(NSString *)userMail;
+
 +(void)clearUserDafault;
 /**
  *present:一个vc,一般指登陆vc
