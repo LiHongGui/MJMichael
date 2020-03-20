@@ -12,6 +12,9 @@
 #import <sys/utsname.h>
 #import <UIKit/UIViewController.h>
 #import <UIKit/UIKitDefines.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <Availability.h>
+#import "MJRefreshStateHeader.h"
 ////#import "AFNetworking.h"
 ////#import "WSProgressHUD.h"
 ////#import "MJExtension.h"
@@ -24,7 +27,12 @@
 ////#define //XLog(...)
 ////#endif
 //#define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
-//
+#define kUIS_W [UIScreen mainScreen].bounds.size.width
+#define kUIS_H [UIScreen mainScreen].bounds.size.height
+#define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
+@interface MJMichael()
+@end
+static UIView *statusBar = nil;
 @implementation MJMichael
 +(BOOL)vcIsAppear:(UIViewController *)vc
 {
@@ -50,56 +58,6 @@
       NSAttributedString *attributeStr = [[NSAttributedString alloc] initWithString:str attributes:dic];
     return attributeStr;
 }
-+(void)iOSDataInteractionForJS:(NSString *)data methodName:(NSString *)methodName{
-    NSString *evalStr = nil;
-    evalStr = [NSString stringWithFormat:@"%@(%@)",methodName,data];
-    //调用上述方法
-    [MJMichael evaluatingJavaScriptFromString:evalStr];
-}
-+(void)evaluatingJavaScriptFromString:(NSString*)string{
-
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
-
-    NSArray *views = [[[window rootViewController] view] subviews];
-
-    NSArray *frames = [self searchViews:views];
-
-    NSLog(@"views == %@",frames);
-    if (frames.count) {
-        PDRCoreAppFrame *appFrame = frames[0];
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            [appFrame performSelectorOnMainThread:@selector(stringByEvaluatingJavaScriptFromString:) withObject:string waitUntilDone:NO];
-        });
-
-    }
-}
-
-+ (NSMutableArray*)searchViews:(NSArray*)views{
-
-    NSMutableArray *frames = [NSMutableArray array];
-    //遍历view
-    for (UIView *temp in views) {
-
-        if ([temp isMemberOfClass:[PDRCoreAppFrame class]]) {
-
-            [frames addObject:temp];
-        }
-        if ([temp subviews]) {
-
-            NSMutableArray *tempArray = [self searchViews:[temp subviews]];
-
-            for (UIView *tempView in tempArray) {
-
-                if ([tempView isMemberOfClass:[PDRCoreAppFrame class]]) {
-
-                    [frames addObject:tempView];
-                }
-            }
-        }
-    }
-    //返回值 frames 为从该层级中找到的 PDRCoreAppFrame
-    return frames;
-}
 +(NSString *)mjDarkModeChange;
 {
     if (@available(iOS 13.0, *)) {
@@ -114,32 +72,7 @@
         return @"lightMode";
     }
 }
-+(void)loactionNotification
-{
-    UILocalNotification *localNote = [[UILocalNotification alloc] init];
-    // 2.设置本地通知的内容
-    // 2.1.设置通知发出的时间
-    localNote.fireDate = [NSDate dateWithTimeIntervalSinceNow:1.0];
-    // 2.≈2.设置通知的内容
-    //    localNote.alertBody = payloadMsg;
-    localNote.alertBody = @"请手动打开,以便继续录制。";
-    // 2.3.设置滑块的文字（锁屏状态下：滑动来“解锁”）
-    localNote.alertAction = kOpenkey;
-    // 2.4.决定alertAction是否生效
-    localNote.hasAction = YES;
-    // 2.5.设置点击通知的启动图片
-    //        localNote.alertLaunchImage = @"123Abc";
-    // 2.6.设置alertTitle
-    //    localNote.alertTitle = [msgDict objectForKey:@"title"];
-    localNote.alertTitle = @"录音转写暂停通知";
-    // 2.7.设置有通知时的音效
-    localNote.soundName = UILocalNotificationDefaultSoundName;
-    // 2.8.设置应用程序图标右上角的数字
-    localNote.applicationIconBadgeNumber = 0;
-    // 2.9.设置额外信息
-    // 3.调用通知
-        [[UIApplication sharedApplication] scheduleLocalNotification:localNote];
-}
+
 + (NSString *)deviceType
 {
     struct utsname systemInfo;
@@ -286,8 +219,15 @@
     vc.navigationController.navigationBar.translucent = NO;
     [vc.navigationController.navigationBar setShadowImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)]];
     [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
-
 }
+
+//+(void)mjAppearNaviBar:(UIViewController *)vc color:(UIColor *)color
+//{
+//    [UIApplication sharedApplication].sta
+//    vc.navigationController.navigationBar.translucent = NO;
+//    [vc.navigationController.navigationBar setShadowImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)]];
+//    [vc.navigationController.navigationBar setBackgroundImage:[MJMichael createImageWithColor:color withRect:CGRectMake(0, 0, 1, 1)] forBarMetrics:UIBarMetricsDefault];
+//}
 #pragma mark-:设置导航栏左右字体颜色
 +(void)mjNaviBarItemColor:(UIViewController *)vc withColor:(UIColor *)color
 {
@@ -308,6 +248,23 @@
         vc.navigationController.navigationBar.translucent = NO;
     }else {
         vc.navigationController.navigationBar.translucent = YES;
+    }
+}
+//设置状态栏颜色
++ (void)setStatusBarBackgroundColor:(UIColor*)color
+{
+    if (@available(iOS 13.0, *)) {
+        if (!statusBar) {
+                 UIWindow *keyWindow = [UIApplication sharedApplication].windows[0];
+                 statusBar = [[UIView alloc] initWithFrame:keyWindow.windowScene.statusBarManager.statusBarFrame];
+                 [keyWindow addSubview:statusBar];
+        }
+    } else {
+        // Fallback on earlier versions
+        statusBar = [[[UIApplication sharedApplication] valueForKey:@"statusBarWindow"] valueForKey:@"statusBar"];
+    }
+    if([statusBar respondsToSelector:@selector(setBackgroundColor:)]) {
+        statusBar.backgroundColor = color;
     }
 }
 + (BOOL)isIphoneX {
@@ -989,91 +946,91 @@
 ////@end
 //
 //
-@interface MJDocumentPicker()<UIDocumentPickerDelegate>
-
-@end
-static MJDocumentPicker *documentPicker = nil;
-@implementation MJDocumentPicker
-+ (MJDocumentPicker *)shareManager {
-
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        documentPicker = [[MJDocumentPicker alloc] init];
-    });
-
-    return documentPicker;
-}
-//懒加载
-- (UIDocumentPickerViewController *)documentPickerVC {
-    if (!_documentPickerVC) {
-        /**
-         初始化
-
-         @param allowedUTIs 支持的文件类型数组
-         @param mode 支持的共享模式
-         */
-        NSArray * arr=@[(__bridge NSString *) kUTTypeContent,
-                        (__bridge NSString *) kUTTypeData,
-                        (__bridge NSString *) kUTTypePackage,
-                        (__bridge NSString *) kUTTypeDiskImage,
-                        @"com.apple.iwork.pages.pages",
-                        @"com.apple.iwork.numbers.numbers",
-                        @"com.apple.iwork.keynote.key"];
-        self.documentPickerVC = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:arr inMode:UIDocumentPickerModeOpen];
-        //设置代理
-        _documentPickerVC.delegate = self;
-        //设置模态弹出方式
-        _documentPickerVC.modalPresentationStyle = UIModalPresentationFormSheet;
-    }
-    return _documentPickerVC;
-}
-#pragma mark - UIDocumentPickerDelegate
-
-- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
-    //获取授权
-    BOOL fileUrlAuthozied = [urls.firstObject startAccessingSecurityScopedResource];
-    if (fileUrlAuthozied) {
-        //通过文件协调工具来得到新的文件地址，以此得到文件保护功能
-        NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-        NSError *error;
-
-        [fileCoordinator coordinateReadingItemAtURL:urls.firstObject options:0 error:&error byAccessor:^(NSURL *newURL) {
-            //读取文件
-            NSString *fileName = [newURL lastPathComponent];
-            NSError *error = nil;
-            NSData *fileData = [NSData dataWithContentsOfURL:newURL options:NSDataReadingMappedIfSafe error:&error];
-            NSLog(@"newURL.absoluteString:%@---fileName:%@---fileData:%@",newURL.absoluteString,fileName,fileData);
-            if (error) {
-                //读取出错
-            } else {
-                //上传 
-                NSLog(@"filePathType:%@",[FileTypeModel filePathType:newURL.absoluteString]);
-                [MJHttpManager PostAFMultipartWithUrlString:@"filestore/upload.jhtml" parameters:nil withFileData:fileData withFilePathType:[FileTypeModel filePathType:newURL.absoluteString] mimeType:@"audio/txt" progress:^(float progress) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.2f%%",ABS(progress-0.01)] maskType:WSProgressHUDMaskTypeClear];
-
-                });
-                } showMsg:YES session:^(BOOL session) {
-
-                } success:^(id obj) {
-                    NSArray *temp = [obj mj_JSONObject];
-                    NSDictionary *dict = temp[0];
-                    NSMutableDictionary *muDict = [NSMutableDictionary dictionaryWithDictionary:dict];
-                    [muDict setValue:self.pageId forKey:@"pageId"];
-                    [MJMichael iOSDataInteractionForJS:[NSString stringWithFormat:@"[%@]",[muDict mj_JSONString]] methodName:@"mjDocumentPicker"];
-                } failure:^(NSError *error) {
-
-                } callBackJSON:YES withAFMediaType:NO];
-
-            }
-
-        }];
-        [urls.firstObject stopAccessingSecurityScopedResource];
-    } else {
-        //授权失败
-    }
-}
-@end
+//@interface MJDocumentPicker()<UIDocumentPickerDelegate>
+//
+//@end
+//static MJDocumentPicker *documentPicker = nil;
+//@implementation MJDocumentPicker
+//+ (MJDocumentPicker *)shareManager {
+//
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        documentPicker = [[MJDocumentPicker alloc] init];
+//    });
+//
+//    return documentPicker;
+//}
+////懒加载
+//- (UIDocumentPickerViewController *)documentPickerVC {
+//    if (!_documentPickerVC) {
+//        /**
+//         初始化
+//
+//         @param allowedUTIs 支持的文件类型数组
+//         @param mode 支持的共享模式
+//         */
+//        NSArray * arr=@[(__bridge NSString *) kUTTypeContent,
+//                        (__bridge NSString *) kUTTypeData,
+//                        (__bridge NSString *) kUTTypePackage,
+//                        (__bridge NSString *) kUTTypeDiskImage,
+//                        @"com.apple.iwork.pages.pages",
+//                        @"com.apple.iwork.numbers.numbers",
+//                        @"com.apple.iwork.keynote.key"];
+//        self.documentPickerVC = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:arr inMode:UIDocumentPickerModeOpen];
+//        //设置代理
+//        _documentPickerVC.delegate = self;
+//        //设置模态弹出方式
+//        _documentPickerVC.modalPresentationStyle = UIModalPresentationFormSheet;
+//    }
+//    return _documentPickerVC;
+//}
+//#pragma mark - UIDocumentPickerDelegate
+//
+//- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+//    //获取授权
+//    BOOL fileUrlAuthozied = [urls.firstObject startAccessingSecurityScopedResource];
+//    if (fileUrlAuthozied) {
+//        //通过文件协调工具来得到新的文件地址，以此得到文件保护功能
+//        NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
+//        NSError *error;
+//
+//        [fileCoordinator coordinateReadingItemAtURL:urls.firstObject options:0 error:&error byAccessor:^(NSURL *newURL) {
+//            //读取文件
+//            NSString *fileName = [newURL lastPathComponent];
+//            NSError *error = nil;
+//            NSData *fileData = [NSData dataWithContentsOfURL:newURL options:NSDataReadingMappedIfSafe error:&error];
+//            NSLog(@"newURL.absoluteString:%@---fileName:%@---fileData:%@",newURL.absoluteString,fileName,fileData);
+//            if (error) {
+//                //读取出错
+//            } else {
+//                //上传
+//                NSLog(@"filePathType:%@",[FileTypeModel filePathType:newURL.absoluteString]);
+//                [MJHttpManager PostAFMultipartWithUrlString:@"filestore/upload.jhtml" parameters:nil withFileData:fileData withFilePathType:[FileTypeModel filePathType:newURL.absoluteString] mimeType:@"audio/txt" progress:^(float progress) {
+//                dispatch_async(dispatch_get_main_queue(), ^{
+//                    [WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.2f%%",ABS(progress-0.01)] maskType:WSProgressHUDMaskTypeClear];
+//
+//                });
+//                } showMsg:YES session:^(BOOL session) {
+//
+//                } success:^(id obj) {
+//                    NSArray *temp = [obj mj_JSONObject];
+//                    NSDictionary *dict = temp[0];
+//                    NSMutableDictionary *muDict = [NSMutableDictionary dictionaryWithDictionary:dict];
+//                    [muDict setValue:self.pageId forKey:@"pageId"];
+//                    [MJMichael iOSDataInteractionForJS:[NSString stringWithFormat:@"[%@]",[muDict mj_JSONString]] methodName:@"mjDocumentPicker"];
+//                } failure:^(NSError *error) {
+//
+//                } callBackJSON:YES withAFMediaType:NO];
+//
+//            }
+//
+//        }];
+//        [urls.firstObject stopAccessingSecurityScopedResource];
+//    } else {
+//        //授权失败
+//    }
+//}
+//@end
 @implementation MJAlertView
 #pragma mark-:弹窗按钮
 +(void)mjAlertTitle:(NSString *)title withMessage:(NSString *)message withCancelTitle:(NSString *)cancelTitle withCancelAction:(CancelAction)cancelAction withSureTitle:(NSString *)sureTitle withSureAction:(SureAction)sureAction withVC:(UIViewController *)vc withCount:(NSInteger)count sureIndex:(NSInteger)index
@@ -1113,12 +1070,12 @@ static MJDocumentPicker *documentPicker = nil;
 #pragma mark-代理:检测版本
 +(void)chectVersion
 {
-    NSString *currentTime = [TimeHelper currentZeroTime];
-    NSTimeInterval nextTime = [TimeHelper whichTime:@"2019/2/20"];
-    if ([currentTime integerValue]>nextTime ) {
-        NSTimer *timer = [NSTimer timerWithTimeInterval:0 target:self selector:@selector(timerAction) userInfo:nil repeats:NO];
-        [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
-    }
+//    NSString *currentTime = [TimeHelper currentZeroTime];
+//    NSTimeInterval nextTime = [TimeHelper whichTime:@"2019/2/20"];
+//    if ([currentTime integerValue]>nextTime ) {
+//        NSTimer *timer = [NSTimer timerWithTimeInterval:0 target:self selector:@selector(timerAction) userInfo:nil repeats:NO];
+//        [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+//    }
 }
 +(void)timeOut:(NSInteger )timeOut timeOutBlock:(TimeOutBlock)timeOutBlock
 {
@@ -1617,6 +1574,7 @@ static MJDocumentPicker *documentPicker = nil;
 @interface MJRefreshHF()
 
 @end
+
 @implementation MJRefreshHF
 +(MJRefreshHF *)mjManager
 {
@@ -1625,73 +1583,73 @@ static MJDocumentPicker *documentPicker = nil;
 #pragma mark---:加载MJRefreshNormalHeader,scrollView:tableView,collectionView,completion:下拉加载
 +(void)mjRefreshHeaderInScrollView:(UIScrollView *)scrollView beginRefreshing:(BOOL)beginRefreshing completion:(MJRefreshHFComponentBlock)completion
 {
-    MJRefreshNormalHeader *normalHeader = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
-        completion();
-    }];
-    //初始化时开始刷新
-    if (beginRefreshing) {
-        [normalHeader beginRefreshing];
-    }
-    scrollView.mj_header = normalHeader;
+//    MJRefreshNormalHeader *normalHeader = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+//        completion();
+//    }];
+//    //初始化时开始刷新
+//    if (beginRefreshing) {
+//        [normalHeader beginRefreshing];
+//    }
+//    scrollView.mj_header = normalHeader;
 }
 #pragma mark---:加载MJRefreshAutoNormalFooter,scrollView:tableView,collectionView,completion:下拉加载
 +(void)mjRefreshFooterInScrollView:(UIScrollView *)scrollView completion:(MJRefreshHFComponentBlock)completion
 {
-    MJRefreshAutoNormalFooter *normalFooter = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
-        completion();
-    }];
-    //    normalFooter.frame = CGRectMake(CGRectGetMinX(scrollView.mj_footer.frame), CGRectGetMinY(scrollView.mj_footer.frame), scrollView.mj_footer.frame.size.width, 0);
-    scrollView.mj_footer = normalFooter;
-    normalFooter.hidden = YES;
+//    MJRefreshAutoNormalFooter *normalFooter = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+//        completion();
+//    }];
+//    //    normalFooter.frame = CGRectMake(CGRectGetMinX(scrollView.mj_footer.frame), CGRectGetMinY(scrollView.mj_footer.frame), scrollView.mj_footer.frame.size.width, 0);
+//    scrollView.mj_footer = normalFooter;
+//    normalFooter.hidden = YES;
 }
 #pragma mark---:mj_footer隐藏
 +(void)mjRefreshFooterHiddenInScrollView:(UIScrollView *)scrollView
 {
-    scrollView.mj_footer.hidden = YES;
+//    scrollView.mj_footer.hidden = YES;
 }
 #pragma mark---:mj_footer设置高度
 +(void)mjRefreshSetupFooterFrameInScrollView:(UIScrollView *)scrollView
 {
-    scrollView.mj_footer.hidden = NO;
+//    scrollView.mj_footer.hidden = NO;
     //    scrollView.mj_footer.frame = CGRectMake(CGRectGetMinX(scrollView.mj_footer.frame), CGRectGetMinY(scrollView.mj_footer.frame), scrollView.mj_footer.frame.size.width, 44);
 }
 #pragma mark---:上拉,下拉加载结束
 +(void)mjHFEndRefreshingByScrollView:(UIScrollView *)scrollView withCount:(NSInteger)count
 {
 
-    [scrollView.mj_header endRefreshing];
-    scrollView.mj_header.hidden = NO;
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        scrollView.mj_footer.hidden = NO;
-//    });
-    if (count < 15) {
-        scrollView.mj_footer.state = MJRefreshStateNoMoreData;
+//    [scrollView.mj_header endRefreshing];
+//    scrollView.mj_header.hidden = NO;
+////    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 //        scrollView.mj_footer.hidden = NO;
-    }else if (count ==15)
-    {
-        [scrollView.mj_footer endRefreshing];
-//        scrollView.mj_footer.hidden = NO;
-    }else if (count ==0){
-//        scrollView.mj_footer.hidden = YES;
-    }
-    for (id obj in scrollView.subviews) {
-        if ([obj isKindOfClass:[UIImageView class]]) {
-            UIImageView *iv = (UIImageView *)obj;
-            if (iv.tag == 1000) {
-                [iv removeFromSuperview];
-            }
-        }else  if ([obj isKindOfClass:[UILabel class]]) {
-            UILabel *label = (UILabel *)obj;
-            if (label.tag == 1001) {
-                [label removeFromSuperview];
-            }
-        }
-    }
+////    });
+//    if (count < 15) {
+//        scrollView.mj_footer.state = MJRefreshStateNoMoreData;
+////        scrollView.mj_footer.hidden = NO;
+//    }else if (count ==15)
+//    {
+//        [scrollView.mj_footer endRefreshing];
+////        scrollView.mj_footer.hidden = NO;
+//    }else if (count ==0){
+////        scrollView.mj_footer.hidden = YES;
+//    }
+//    for (id obj in scrollView.subviews) {
+//        if ([obj isKindOfClass:[UIImageView class]]) {
+//            UIImageView *iv = (UIImageView *)obj;
+//            if (iv.tag == 1000) {
+//                [iv removeFromSuperview];
+//            }
+//        }else  if ([obj isKindOfClass:[UILabel class]]) {
+//            UILabel *label = (UILabel *)obj;
+//            if (label.tag == 1001) {
+//                [label removeFromSuperview];
+//            }
+//        }
+//    }
 }
 #pragma mark---:mj_footer状态:没有更多数据了
 +(void)mjFooterStateNoMoreDataByScrollView:(UIScrollView *)scrollView
 {
-    scrollView.mj_footer.state = MJRefreshStateNoMoreData;
+//    scrollView.mj_footer.state = MJRefreshStateNoMoreData;
 }
 #pragma mark---:没有数据,清除MJRefreshNormalHeader,MJRefreshAutoNormalFooter
 +(void)clearHFByScrollView:(UIScrollView *)scrollView
@@ -1699,7 +1657,7 @@ static MJDocumentPicker *documentPicker = nil;
 //    [scrollView.mj_header removeFromSuperview];
 //    [scrollView.mj_footer removeFromSuperview];
     scrollView.mj_header.hidden = YES;
-    scrollView.mj_footer.hidden = YES;
+//    scrollView.mj_footer.hidden = YES;
 }
 #pragma mark---:没有数据,显示占位符图片
 + (void)emptyDataSet:(UIScrollView *)scrollView y:(CGFloat )y{
@@ -1718,7 +1676,7 @@ static MJDocumentPicker *documentPicker = nil;
                 imageView.center = CGPointMake(([UIScreen mainScreen].bounds.size.width)/2, y+(imageView.frame.size.height+label.frame.size.height)/2);
                 [scrollView addSubview:imageView];
                 label.tag = 1001;
-                label.text = kNoData;
+                label.text = @"暂无数据";
                 label.textAlignment = NSTextAlignmentCenter;
                 label.textColor = kLabel102Color;
                 label.font = [UIFont systemFontOfSize:14];
@@ -1753,7 +1711,7 @@ static MJDocumentPicker *documentPicker = nil;
                                  NSFontAttributeName:[UIFont boldSystemFontOfSize:14],
                                  NSForegroundColorAttributeName:kLabel102Color
                                  };
-    return [[NSAttributedString alloc] initWithString:kNoData attributes:attributes];
+    return [[NSAttributedString alloc] initWithString:@"暂无数据" attributes:attributes];
 }
 @end
 //@interface MJUpdateImageVideo()

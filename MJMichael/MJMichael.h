@@ -28,6 +28,10 @@
  */
 +(void)mjNaviBarItemColor:(UIViewController *)vc withColor:(UIColor *)color;
 /**
+*设置状态栏背景色
+*/
++ (void)setStatusBarBackgroundColor:(UIColor*)color;
+/**
  *设置导航栏背景色
  */
 +(void)mjNaviBarColor:(UIViewController *)vc withColor:(UIColor *)color withAlpha:(CGFloat )alpha;
