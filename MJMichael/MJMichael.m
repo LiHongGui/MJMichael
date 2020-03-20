@@ -30,6 +30,8 @@
 #define kUIS_W [UIScreen mainScreen].bounds.size.width
 #define kUIS_H [UIScreen mainScreen].bounds.size.height
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
+#define kUIScreen [UIScreen mainScreen].bounds
+
 @interface MJMichael()
 @end
 static UIView *statusBar = nil;
