@@ -1665,7 +1665,7 @@ static UIView *statusBar = nil;
 + (void)emptyDataSet:(UIScrollView *)scrollView y:(CGFloat )y{
     UIImage *image = [UIImage imageNamed:@"empty"];
     UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 75, 54)];
-    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, kUIScreen.size.width, 17)];
+    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 17)];
     [self clearHFByScrollView:scrollView];
     for (id obj in scrollView.subviews) {
 //        if ([obj isKindOfClass:[UIImageView class]]) {
