@@ -62,7 +62,6 @@
     self.navigationBar.barTintColor = [UIColor colorWithRed:(34/255.0) green:(34/255.0)  blue:(34/255.0) alpha:1.0];
     self.navigationBar.tintColor = [UIColor whiteColor];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    self.navigationItem.leftBarButtonItem =  [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"daohanglanfanhui"] style:UIBarButtonItemStyleDone target:self action:@selector(clickLeftBar)];
     if (self.needShowStatusBar) [UIApplication sharedApplication].statusBarHidden = NO;
 }
 
@@ -152,7 +151,7 @@
 - (instancetype)initWithMaxImagesCount:(NSInteger)maxImagesCount columnNumber:(NSInteger)columnNumber delegate:(id<TZImagePickerControllerDelegate>)delegate pushPhotoPickerVc:(BOOL)pushPhotoPickerVc allowPickingMultipleVideo:(BOOL )allowPickingMultipleVideo {
     _pushPhotoPickerVc = pushPhotoPickerVc;
     TZAlbumPickerController *albumPickerVc = [[TZAlbumPickerController alloc] init];
-    albumPickerVc.isFirstAppear = NO;
+    albumPickerVc.isFirstAppear = YES;
     albumPickerVc.columnNumber = columnNumber;
     self = [super initWithRootViewController:albumPickerVc];
     if (self) {
@@ -700,7 +699,7 @@
     
     TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
     
-    imagePickerVc.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"取消" style:UIBarButtonItemStylePlain target:imagePickerVc action:@selector(cancelButtonClick)];
+    imagePickerVc.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:imagePickerVc.cancelBtnTitleStr style:UIBarButtonItemStylePlain target:imagePickerVc action:@selector(cancelButtonClick)];
     
 }
 
@@ -714,9 +713,9 @@
         self.navigationItem.title = [NSBundle tz_localizedStringForKey:@"Videos"];
     }
     
-//    if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
-        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
-//    }
+    if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
+        //        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+    }
     
     [self configTableView];
 }
