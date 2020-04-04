@@ -11,14 +11,13 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
+
 #pragma mark-:隐藏导航栏底部黑线
 +(void)mjHiddenBottomLine:(UIViewController*)vc;
 #pragma mark-screenHeight
 + (CGFloat)mjScreenHeight;
 #pragma mark-screenWidth
 + (CGFloat)mjScreenWidth;
-#pragma mark-导航栏高度
-+ (CGFloat)mjNaviHeight;
 #pragma mark-状态栏高度
 + (CGFloat)mjStatusHeight;
 #pragma mark-导航栏高度
@@ -50,6 +49,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (BOOL)stringIsNullOrEmpty:(id)str;
 
+
+@end
+@interface MJDevice : NSObject
+typedef void (^MJDeviceBlockWH)(NSString *wh);
+typedef void (^MJDeviceBlockType)(NSInteger deviceType);
++ (NSString *)getUUID;
++(BOOL)isPadDevice;
++(void)deviceType:(MJDeviceBlockType)deviceType wh:(MJDeviceBlockWH)wh;
 
 @end
 @interface MJColor : UIColor
