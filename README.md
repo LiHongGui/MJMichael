@@ -1,5 +1,9 @@
 MJMichael
 更新记录:
+v4.2.9:
+1:添加WebViewJavascriptBridge(MJWKWebView与js数据交互)
+-(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative;
+
 v4.2.7:
 1:添加MJWKWebView
 //WKWebView加载本地H5
