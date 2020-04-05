@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
+#import <JavaScriptCore/JavaScriptCore.h>
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
@@ -53,7 +55,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 @interface MJWKWebView : WKWebView
+typedef void (^JSSendNativeBlack)(NSString *jsSendNativeStr);
+typedef void (^NativeSendJSBlack)(NSString *NativeSendJSStr);
 +(MJWKWebView *)shareManagerFrame:(CGRect)frame ByVC:(UIViewController *)vc loadHTML:(NSString *)html;
+-(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative;
+@property (nonatomic, strong) JSContext *jsContext;
 
 @end
 @interface MJDevice : NSObject

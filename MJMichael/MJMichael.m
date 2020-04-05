@@ -14,6 +14,7 @@
 #import "TZImagePickerController.h"
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
+#import "WKWebViewJavascriptBridge.h"
 
 #define kUIScreen [UIScreen mainScreen].bounds
 #define kUIS_W [UIScreen mainScreen].bounds.size.width
@@ -183,6 +184,7 @@ static UIView *statusBar = nil;
 @property(nonatomic,strong) WKWebViewConfiguration *wkConfig;
 @end
 static MJWKWebView *wkWebView = nil;
+static WKWebViewJavascriptBridge *bridge = nil;
 //static NSString *methodObj = @"";
 @implementation MJWKWebView
 
@@ -194,8 +196,21 @@ static MJWKWebView *wkWebView = nil;
         [wkWebView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:html ofType:nil inDirectory:@"www"]]]];
         wkWebView.navigationDelegate = self;
         wkWebView.UIDelegate = self;
+        bridge = [WKWebViewJavascriptBridge bridgeForWebView:wkWebView];
+        [bridge setWebViewDelegate:wkWebView];
     });
     return wkWebView;;
+}
+-(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative
+{
+    [bridge registerHandler:bridgeMethod handler:^(id data, WVJBResponseCallback responseCallback) {
+
+        // data 的类型与 JS中传的参数有关
+        XLog(@"data:%@",data);
+        // 将分享的结果返回到JS中
+        jsSendNative(data);
+        responseCallback(@"返回给js的值");
+    }];
 }
 #pragma mark - WKUIDelegate
 - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler

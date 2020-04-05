@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "MJMichael"
-  s.version      = "4.2.8"
+  s.version      = "4.2.9"
   s.summary      = "封装库"
 
   # This description is used to generate tags and improve search results.
