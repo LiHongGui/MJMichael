@@ -206,7 +206,6 @@ static WKWebViewJavascriptBridge *bridge = nil;
     [bridge registerHandler:bridgeMethod handler:^(id data, WVJBResponseCallback responseCallback) {
 
         // data 的类型与 JS中传的参数有关
-        XLog(@"data:%@",data);
         // 将分享的结果返回到JS中
         jsSendNative(data);
         responseCallback(@"返回给js的值");
