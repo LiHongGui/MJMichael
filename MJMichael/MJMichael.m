@@ -8,22 +8,21 @@
 
 #import "MJMichael.h"
 #import "AFNetworking.h"
-//#import "WSProgressHUD.h"
 //#import "MJExtension.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "WKWebViewJavascriptBridge.h"
-
+#import "WSProgressHUD.h"
 #define kUIScreen [UIScreen mainScreen].bounds
 #define kUIS_W [UIScreen mainScreen].bounds.size.width
 #define kUIS_H [UIScreen mainScreen].bounds.size.height
-//#ifdef DEBUG
-//#define //XLog(...) //XLog(__VA_ARGS__)
-//#else
-//#define //XLog(...)
-//#endif
+#ifdef DEBUG
+#define XLog(...) XLog(__VA_ARGS__)
+#else
+#define XLog(...)
+#endif
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 static UIView *statusBar = nil;
 @implementation MJMichael
@@ -182,6 +181,7 @@ static UIView *statusBar = nil;
 @interface MJWKWebView()<WKNavigationDelegate,WKScriptMessageHandler,WKUIDelegate>
 //@property(nonatomic,strong) WKWebView *webView;
 @property(nonatomic,strong) WKWebViewConfiguration *wkConfig;
+
 @end
 static MJWKWebView *wkWebView = nil;
 static WKWebViewJavascriptBridge *bridge = nil;
@@ -196,13 +196,22 @@ static WKWebViewJavascriptBridge *bridge = nil;
         [wkWebView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:html ofType:nil inDirectory:@"www"]]]];
         wkWebView.navigationDelegate = self;
         wkWebView.UIDelegate = self;
-        bridge = [WKWebViewJavascriptBridge bridgeForWebView:wkWebView];
-        [bridge setWebViewDelegate:wkWebView];
+
     });
     return wkWebView;;
 }
--(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative
++(WKWebViewJavascriptBridge *)shareBridge
 {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        bridge = [WKWebViewJavascriptBridge bridgeForWebView:wkWebView];
+        [bridge setWebViewDelegate:wkWebView];
+    });
+    return bridge;
+}
+-(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative byBridge:(WKWebViewJavascriptBridge *)bridge
+{
+
     [bridge registerHandler:bridgeMethod handler:^(id data, WVJBResponseCallback responseCallback) {
 
         // data 的类型与 JS中传的参数有关
@@ -972,232 +981,94 @@ static WKWebViewJavascriptBridge *bridge = nil;
 }
 @end
 
-//上线
-//#define kRootPath @"http://202.109.75.181:9080/"
-//测试
-#define kRootPath @"http://tt.kakacaifu.com/baby_product/"
-//本地
-//#define kRootPath @"http://192.168.50.26/"
 @interface MJHttpManager()
-
+@property(nonatomic,strong) AFHTTPSessionManager *afnManager;
 @end
+static MJHttpManager *manager = nil;
 @implementation MJHttpManager
-/**
- self.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
- */
-+ (void)PostWithUrlString:(NSString *)urlString
-               parameters:(id)parameters
-                  success:(SuccessBlock)successBlock
-                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
-{
++ (MJHttpManager *)shareManager {
 
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        manager = [[MJHttpManager alloc] init];
+    });
 
-
-
-    if (afMediaType) {
-        manager.requestSerializer = [AFJSONRequestSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-
-            NSDictionary *dict = [NSDictionary dictionary];
-            if (callBackJSON) {
-                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                successBlock(dict);
-                NSLog(@"MJHttpManagerDict:%@",dict);
-                NSLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                NSLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
-            }
-        }
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //XLog(@"error:%@",error);
-        }
-    }];
-
+    return manager;
 }
-/**
- *filePathType:.png,.caf
- *mimeType:@"image/png",audio/caf
- */
-+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
-                          parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType
-                             success:(SuccessBlock)successBlock
-                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
-{
++(void)checkInternetStatus:(InternetSuccess)internetSuccess showWSP:(BOOL )showWSP internetFailure:(InternetFailure)internetFailure{
+    // 1.获得网络监控的管理者
+    AFNetworkReachabilityManager *managerReachability = [AFNetworkReachabilityManager sharedManager];
+    // 2.设置网络状态改变后的处理
+    [managerReachability setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        switch (status) {
+            case AFNetworkReachabilityStatusUnknown:
+                // 未知网络
+            {
+                NSLog(@"未知网络");
 
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-
-
-
-    if (afMediaType) {
-        manager.requestSerializer = [AFJSONRequestSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"yyyyMMddHHmmss";
-        NSString *outputPath = [NSHomeDirectory() stringByAppendingFormat:@"/Documents/%@", [[formatter stringFromDate:[NSDate date]] stringByAppendingString:filePathType]];
-        [formData appendPartWithFileData:fileData name:@"file" fileName:outputPath mimeType:mimeType];
-    } progress:^(NSProgress * _Nonnull uploadProgress) {
-        float update = uploadProgress.fractionCompleted*100;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            //[WSProgressHUD showWithStatus:[NSString stringWithFormat:@"%.f%%",update] maskType:WSProgressHUDMaskTypeClear maskWithout:WSProgressHUDMaskWithoutDefault];
-        });
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
-            //[WSProgressHUD dismiss];
-            NSDictionary *dict = [NSDictionary dictionary];
-            if (callBackJSON) {
-                dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                successBlock(dict);
-                //XLog(@"MJHttpManagerDict:%@",dict);
-//                //XLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                //XLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
-            }
-        }
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //[WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
-            //XLog(@"error:%@",error);
-            //            //[WSProgressHUD dismiss];
-        }
-    }];
-
-
-}
-- (id)mj_JSONObject
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [NSJSONSerialization JSONObjectWithData:[((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [NSJSONSerialization JSONObjectWithData:(NSData *)self options:kNilOptions error:nil];
-    }
-
-    return nil;
-}
-- (NSString *)mj_JSONString
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return (NSString *)self;
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return [[NSString alloc] initWithData:(NSData *)self encoding:NSUTF8StringEncoding];
-    }
-
-    return [[NSString alloc] initWithData:[self mj_JSONData] encoding:NSUTF8StringEncoding];
-}
-#pragma mark - 转换为JSON
-- (NSData *)mj_JSONData
-{
-    if ([self isKindOfClass:[NSString class]]) {
-        return [((NSString *)self) dataUsingEncoding:NSUTF8StringEncoding];
-    } else if ([self isKindOfClass:[NSData class]]) {
-        return (NSData *)self;
-    }
-
-    return [NSJSONSerialization dataWithJSONObject:[self mj_JSONObject] options:kNilOptions error:nil];
-}
-//[UIView animateWithDuration:1 animations:^{
-//
-//} completion:^(BOOL finished) {
-//
-//}];
-/**/
-/**
- *  异步网络(parameters相同)
- */
-+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
-                    parameters:(id)parameters
-                       success:(SuccessBlock)successBlock
-                       failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion
-{
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-
-    //使用GCD的信号量 dispatch_semaphore_t 创建同步请求
-    dispatch_group_t group =dispatch_group_create();
-    dispatch_queue_t globalQueue=dispatch_get_global_queue(0, 0);
-    dispatch_semaphore_t semaphore= dispatch_semaphore_create(0);
-    dispatch_group_async(group, globalQueue, ^{
-        for (int i = 0; i<array.count; i++) {
-            NSDictionary *dict = @{
-                                   @"id":array[i]
-                                   };
-            [manager POST:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:dict progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-                //XLog(@"HomeresponseObject:%@",responseObject);
-                if (successBlock) {
-                    NSDictionary *dict = [NSDictionary dictionary];
-                    if (callBackJSON) {
-                        dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                        successBlock(dict);
-                        //XLog(@"MJHttpManagerDict:%@",dict);
-                        //XLog(@"json:%@",[responseObject mj_JSONString]);
-                    }else {
-                        //XLog(@"responseObject:%@",responseObject);
-                        successBlock(responseObject);
-                    }
+                if (showWSP) {
+                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
                 }
-                dispatch_semaphore_signal(semaphore);
-            } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-                //[WSProgressHUD dismiss];
-                dispatch_semaphore_signal(semaphore);
-            }];
-            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-        }
-
-    });
-
-    dispatch_group_notify(group, dispatch_get_global_queue(0, 0), ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            //[WSProgressHUD dismiss];
-            completion(YES);
-        });
-    });
-
-}
-+ (void)GetWithUrlString:(NSString *)urlString
-              parameters:(id)parameters
-                 success:(SuccessBlock)successBlock
-                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-{
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    if (afMediaType) {
-        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
-    }
-    [manager GET:[NSString stringWithFormat:@"%@%@",kRootPath,urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        if (successBlock) {
-            NSArray *dict = [NSArray array];
-            if (callBackJSON) {
-                dict = [responseObject mj_JSONObject];
-                successBlock(dict);
-                //XLog(@"MJHttpManagerDict:%@",dict);
-                //XLog(@"json:%@",[responseObject mj_JSONString]);
-            }else {
-                //XLog(@"responseObject:%@",responseObject);
-                successBlock(responseObject);
+                internetFailure(YES);
             }
+                break;
+            case AFNetworkReachabilityStatusNotReachable:
+                // 没有网络(断网)
+            {
+                NSLog(@"没有网络(断网)");
+                if (showWSP) {
+                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+                }
+                internetFailure(YES);
+            }
+                break;
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+                // 手机自带网络
+                {
+                    NSLog(@"手机自带网络");
+                    internetSuccess(YES);
+                }
+                break;
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+                // WIFI
+                {
+                    NSLog(@"WIFI");
+                    internetSuccess(YES);
+                }
+                break;
         }
-        //[WSProgressHUD dismiss];
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        if (failureBlock) {
-            failureBlock(error);
-            //[WSProgressHUD dismiss];
-        }
+    }];
+    [managerReachability startMonitoring];
+}
+#pragma mark -检测网络
++(void)netWorkStateInternetStatus:(InternetSuccess)internetSuccess internetFailure:(InternetFailure)internetFailure;
+{
+    AFNetworkReachabilityManager *manager = [AFNetworkReachabilityManager sharedManager];
 
+    // 提示：要监控网络连接状态，必须要先调用单例的startMonitoring方法
+    [manager startMonitoring];
+    //检测的结果
+    [manager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        if (status==0||status==-1) {
+            //将netState值传入block中
+            [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+            internetFailure(YES);
+        }else{
+            internetSuccess(YES);
+            //将netState值传入block中
+        }
     }];
 }
+#pragma mark-:取消网络请求
+-(void )cancelInternetManager
+{
+    if ([[MJHttpManager shareManager].afnManager.tasks count] > 0) {
+        NSLog(@"返回时取消网络请求");
+        [[MJHttpManager shareManager].afnManager.tasks makeObjectsPerformSelector:@selector(cancel)];
+        NSLog(@"tasks = %@",[MJHttpManager shareManager].afnManager.tasks);
+    }
+}
+
 @end
 
 @implementation MJMutableAttributedString

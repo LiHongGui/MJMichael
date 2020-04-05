@@ -10,6 +10,7 @@
 #import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
+#import "WKWebViewJavascriptBridge.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,9 +59,9 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^JSSendNativeBlack)(NSString *jsSendNativeStr);
 typedef void (^NativeSendJSBlack)(NSString *NativeSendJSStr);
 +(MJWKWebView *)shareManagerFrame:(CGRect)frame ByVC:(UIViewController *)vc loadHTML:(NSString *)html;
--(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative;
++(WKWebViewJavascriptBridge *)shareBridge;
+-(void)mjBridgJSSendNative:(NSString *)bridgeMethod jsSendNative:(JSSendNativeBlack)jsSendNative byBridge:(WKWebViewJavascriptBridge *)bridge;
 @property (nonatomic, strong) JSContext *jsContext;
-
 @end
 @interface MJDevice : NSObject
 typedef void (^MJDeviceBlockWH)(NSString *wh);
@@ -224,45 +225,20 @@ typedef void (^UpdateShowBlock)(BOOL latestVersion);
  */
 +(void)timerAction;
 @end
-
 typedef void (^SuccessBlock)(id obj);
+typedef void (^ProgressBlock)(float progress);
 typedef void (^FailureBlock)(NSError *error);
 typedef void (^Completion)(BOOL finished);
-//completion:<#^(BOOL finished)completion#>]  completion:(void (^ __nullable)(BOOL finished))completion
+typedef void (^SessionBlock)(BOOL session);
+typedef void (^InternetSuccess)(BOOL internetSuccess);
+typedef void (^InternetFailure)(BOOL internetFailure);
 
 @interface MJHttpManager : NSObject
-
 @property (nonatomic, copy) SuccessBlock successBlock;
+@property (nonatomic, copy) ProgressBlock progressBlock;
 @property (nonatomic, copy) FailureBlock failureBlock;
+@property (nonatomic, copy) SessionBlock sessionBlock;
 @property(nonatomic,strong) NSArray *tempURL;
-/**
- *  post请求
- */
-+ (void)PostWithUrlString:(NSString *)urlString
-               parameters:(id)parameters
-                  success:(SuccessBlock)successBlock
-                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  post表单上传附件
- *filePathType:.png,.caf
- *mimeType:@"image/png",audio/caf
- */
-+ (void)PostAFMultipartWithUrlString:(NSString *)urlString
-                          parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType
-                             success:(SuccessBlock)successBlock
-                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  get请求
- */
-+ (void)GetWithUrlString:(NSString *)urlString
-              parameters:(id)parameters
-                 success:(SuccessBlock)successBlock
-                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
-/**
- *  异步网络(parameters相同)
- */
-+ (void)PostAsyncWithUrlString:(NSString *)urlString withArray:(NSArray *)array
-                    parameters:(id)parameters success:(SuccessBlock)successBlock failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON completion:(Completion)completion;
 @end
 
 @interface MJMutableAttributedString : NSObject
