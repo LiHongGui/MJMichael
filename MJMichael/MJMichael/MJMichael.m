@@ -12,6 +12,8 @@
 //#import "MJExtension.h"
 #import "MJRefresh.h"
 #import "TZImagePickerController.h"
+#import <WebKit/WebKit.h>
+#import <JavaScriptCore/JavaScriptCore.h>
 
 #define kUIScreen [UIScreen mainScreen].bounds
 #define kUIS_W [UIScreen mainScreen].bounds.size.width
@@ -175,6 +177,43 @@ static UIView *statusBar = nil;
 }
 
 
+@end
+@interface MJWKWebView()<WKNavigationDelegate,WKScriptMessageHandler,WKUIDelegate>
+//@property(nonatomic,strong) WKWebView *webView;
+@property(nonatomic,strong) WKWebViewConfiguration *wkConfig;
+@end
+static MJWKWebView *wkWebView = nil;
+//static NSString *methodObj = @"";
+@implementation MJWKWebView
+
++(MJWKWebView *)shareManagerFrame:(CGRect)frame ByVC:(UIViewController *)vc loadHTML:(NSString *)html
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        wkWebView = [[MJWKWebView alloc] initWithFrame:frame];
+        [wkWebView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:html ofType:nil inDirectory:@"www"]]]];
+        wkWebView.navigationDelegate = self;
+        wkWebView.UIDelegate = self;
+    });
+    return wkWebView;;
+}
+#pragma mark - WKUIDelegate
+- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
+{
+
+//    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提醒" message:message preferredStyle:UIAlertControllerStyleAlert];
+//    [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+//        completionHandler();
+//    }]];
+//
+//    [self presentViewController:alert animated:YES completion:nil];
+}
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
+{
+//    [WSProgressHUD setProgressHUDIndicatorStyle:WSProgressHUDIndicatorBigGray];
+//    [WSProgressHUD show];
+
+}
 @end
 @interface MJDevice()
 

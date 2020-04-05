@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
@@ -49,6 +50,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (BOOL)stringIsNullOrEmpty:(id)str;
 
+
+@end
+@interface MJWKWebView : WKWebView
++(MJWKWebView *)shareManagerFrame:(CGRect)frame ByVC:(UIViewController *)vc loadHTML:(NSString *)html;
 
 @end
 @interface MJDevice : NSObject
