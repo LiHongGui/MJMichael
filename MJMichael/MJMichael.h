@@ -11,7 +11,7 @@
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "WKWebViewJavascriptBridge.h"
-
+#import "AFNetworking.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MJMichael : NSObject
@@ -232,13 +232,30 @@ typedef void (^Completion)(BOOL finished);
 typedef void (^SessionBlock)(BOOL session);
 typedef void (^InternetSuccess)(BOOL internetSuccess);
 typedef void (^InternetFailure)(BOOL internetFailure);
-
+typedef void(^CheckSession)(BOOL checkSession);
 @interface MJHttpManager : NSObject
 @property (nonatomic, copy) SuccessBlock successBlock;
 @property (nonatomic, copy) ProgressBlock progressBlock;
 @property (nonatomic, copy) FailureBlock failureBlock;
 @property (nonatomic, copy) SessionBlock sessionBlock;
 @property(nonatomic,strong) NSArray *tempURL;
++ (AFHTTPSessionManager *)shareManager;
++(void)checkInternetStatus:(InternetSuccess)internetSuccess showWSP:(BOOL )showWSP internetFailure:(InternetFailure)internetFailure;
++(void)netWorkStateInternetStatus:(InternetSuccess)internetSuccess internetFailure:(InternetFailure)internetFailure;
+#pragma mark-:取消网络请求
++(void )cancelInternetManager;
++ (void)postWithUrlString:(NSString *)urlString
+parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
++ (void)getWithUrlString:(NSString *)urlString
+parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+                 failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
++ (void)postAFMultipartWithUrlString:(NSString *)urlString
+parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType progress:(ProgressBlock)progress showMsg:(BOOL)showMsg checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+                             failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType;
 @end
 
 @interface MJMutableAttributedString : NSObject
@@ -506,6 +523,8 @@ typedef void (^Completion)(BOOL finished);
 +(NSString *)readUserAccount;
 +(void)savesUserAccount:(id)userAccount value:(NSString *)userAccountValue;
 +(void)clearUserDafault;
++(NSString *)readCookie;
++(void)savesCookie:(id)cookie value:(NSString *)cookie;
 /**
  *present:一个vc,一般指登陆vc
  */

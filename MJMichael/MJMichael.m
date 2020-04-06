@@ -15,14 +15,10 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "WKWebViewJavascriptBridge.h"
 #import "WSProgressHUD.h"
+#import "MJExtension.h"
 #define kUIScreen [UIScreen mainScreen].bounds
 #define kUIS_W [UIScreen mainScreen].bounds.size.width
 #define kUIS_H [UIScreen mainScreen].bounds.size.height
-#ifdef DEBUG
-#define XLog(...) XLog(__VA_ARGS__)
-#else
-#define XLog(...)
-#endif
 #define kLabel102Color [UIColor colorWithRed:102/255.0 green:102/255.0 blue:102/255.0 alpha:1]
 static UIView *statusBar = nil;
 @implementation MJMichael
@@ -905,15 +901,15 @@ static WKWebViewJavascriptBridge *bridge = nil;
     //    NSString *urlStr=[NSString stringWithFormat:@"https://itunes.apple.com/lookup?id=%d",kID];
     //    NSURL *url=[NSURL URLWithString:urlStr];
     //    NSData *json = [NSData dataWithContentsOfURL:url];
-    //    //        //XLog(@"json:%@",json);
+    //    //        //NSLog(@"json:%@",json);
     //    NSDictionary *dictVersion = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
-    //    //XLog(@"dictVersion:%@",dictVersion);
+    //    //NSLog(@"dictVersion:%@",dictVersion);
     //    NSArray *results = [dictVersion objectForKey:@"results"];
     //    NSDictionary *dictSub = results[0];
-    //    //XLog(@"results:%@",results);
+    //    //NSLog(@"results:%@",results);
     //    NSString  *message = [dictSub objectForKey:@"releaseNotes"];
     //    NSString *version = [dictSub objectForKey:@"version"];
-    //    //XLog(@"version:%@",version);
+    //    //NSLog(@"version:%@",version);
     //    if (![version isEqualToString:getLocalVersion]) {
     //        TYAlertView *alertView = [TYAlertView alertViewWithTitle:[NSString stringWithFormat:@"发现新版本v%@",version] message:@""];
     //        alertView.messageLabel.text = message;
@@ -923,7 +919,7 @@ static WKWebViewJavascriptBridge *bridge = nil;
     //            //                NSString *str = urlStr //更换id即可
     //            //https://itunes.apple.com/cn/app/id1441941518
     //            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://itunes.apple.com/cn/app/id%d",kID]]];
-    //            ////XLog(@"%@",action.title);
+    //            ////NSLog(@"%@",action.title);
     //        }]];
     //        TYAlertController *alertController = [TYAlertController alertControllerWithAlertView:alertView preferredStyle:TYAlertControllerStyleAlert transitionAnimation:TYAlertTransitionAnimationDropDown];
     //        [self presentViewController:alertController animated:YES completion:nil];
@@ -946,10 +942,10 @@ static WKWebViewJavascriptBridge *bridge = nil;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
     NSArray *resultsSub = [dict objectForKey:@"results"];
 
-    //XLog(@"获取App Store版本:%@",resultsSub);
+    //NSLog(@"获取App Store版本:%@",resultsSub);
     NSDictionary *result = [resultsSub objectAtIndex:0];
     NSString *releaseMsg = [result objectForKey:@"releaseNotes"];
-    //XLog(@"releaseMsg:%@",releaseMsg);
+    //NSLog(@"releaseMsg:%@",releaseMsg);
     double appStore = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
     if (app_Version < appStore) {
         releaseNotes(releaseMsg);
@@ -973,7 +969,7 @@ static WKWebViewJavascriptBridge *bridge = nil;
     NSData *json = [NSData dataWithContentsOfURL:url];
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:NULL];//解析json文件
     NSArray *resultsSub = [dict objectForKey:@"results"];
-    //XLog(@"获取App Store版本:%@",resultsSub);
+    //NSLog(@"获取App Store版本:%@",resultsSub);
     NSDictionary *result = [resultsSub objectAtIndex:0];
     NSString  *message = [result objectForKey:@"releaseNotes"];
     double versionStr = [[result objectForKey:@"version"]doubleValue];//获得AppStore中的app的版本
@@ -982,18 +978,18 @@ static WKWebViewJavascriptBridge *bridge = nil;
 @end
 
 @interface MJHttpManager()
-@property(nonatomic,strong) AFHTTPSessionManager *afnManager;
 @end
-static MJHttpManager *manager = nil;
+//static MJHttpManager *manager = nil;
+static AFHTTPSessionManager *afnManager = nil;
 @implementation MJHttpManager
-+ (MJHttpManager *)shareManager {
++ (AFHTTPSessionManager *)shareManager {
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        manager = [[MJHttpManager alloc] init];
+        afnManager = [AFHTTPSessionManager manager];
     });
 
-    return manager;
+    return afnManager;
 }
 +(void)checkInternetStatus:(InternetSuccess)internetSuccess showWSP:(BOOL )showWSP internetFailure:(InternetFailure)internetFailure{
     // 1.获得网络监控的管理者
@@ -1007,7 +1003,9 @@ static MJHttpManager *manager = nil;
                 NSLog(@"未知网络");
 
                 if (showWSP) {
-                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+                    });
                 }
                 internetFailure(YES);
             }
@@ -1017,7 +1015,9 @@ static MJHttpManager *manager = nil;
             {
                 NSLog(@"没有网络(断网)");
                 if (showWSP) {
-                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请检查网络设置!"];
+                    });
                 }
                 internetFailure(YES);
             }
@@ -1040,6 +1040,7 @@ static MJHttpManager *manager = nil;
     }];
     [managerReachability startMonitoring];
 }
+
 #pragma mark -检测网络
 +(void)netWorkStateInternetStatus:(InternetSuccess)internetSuccess internetFailure:(InternetFailure)internetFailure;
 {
@@ -1060,15 +1061,184 @@ static MJHttpManager *manager = nil;
     }];
 }
 #pragma mark-:取消网络请求
--(void )cancelInternetManager
++(void )cancelInternetManager
 {
-    if ([[MJHttpManager shareManager].afnManager.tasks count] > 0) {
+    if ([[MJHttpManager shareManager].tasks count] > 0) {
         NSLog(@"返回时取消网络请求");
-        [[MJHttpManager shareManager].afnManager.tasks makeObjectsPerformSelector:@selector(cancel)];
-        NSLog(@"tasks = %@",[MJHttpManager shareManager].afnManager.tasks);
+        [[MJHttpManager shareManager].tasks makeObjectsPerformSelector:@selector(cancel)];
+        NSLog(@"tasks = %@",[MJHttpManager shareManager].tasks);
     }
 }
++ (void)postWithUrlString:(NSString *)urlString
+               parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+                  success:(SuccessBlock)successBlock
+                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+{
 
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [WSProgressHUD dismiss];
+        [MJHttpManager cancelInternetManager];
+    });
+        [self PostWithUrlString:urlString parameters:parameters checkSession:checkSession session:sessionBlock success:successBlock failure:failureBlock callBackJSON:callBackJSON withAFMediaType:afMediaType];
+}
++(void)PostWithUrlString:(NSString *)urlString
+              parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+   failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+{
+    // 3.开始监控
+    [MJHttpManager shareManager].responseSerializer = [AFHTTPResponseSerializer serializer];
+    NSString* headerCookie = [UserDefaultsHelper readCookie];
+    NSLog(@"headerCookie:%@",headerCookie);
+    NSLog(@"urlString-------:%@",urlString);
+    if (checkSession) {
+        if(headerCookie!=nil&& headerCookie.length>0) {
+            [[MJHttpManager shareManager].requestSerializer setValue:headerCookie forHTTPHeaderField:@"Cookie"];
+            
+        }
+    }else {
+        if (afMediaType) {
+            [MJHttpManager shareManager].requestSerializer = [AFJSONRequestSerializer serializer];
+            [MJHttpManager shareManager].responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+        }
+        NSLog(@"urlString:%@---parameters:%@",[NSString stringWithFormat:@"%@",urlString],parameters);
+        [[MJHttpManager shareManager] POST:[NSString stringWithFormat:@"%@",urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            if (successBlock) {
+                if (callBackJSON) {
+                    successBlock([responseObject mj_JSONString]);
+                    NSLog(@"responseObjectDict:%@",[responseObject mj_JSONObject]);
+                    NSLog(@"responseObjectJSON:%@",[responseObject mj_JSONString]);
+                }else {
+                    NSLog(@"responseObject:%@",responseObject);
+                    successBlock(responseObject);
+                }
+
+            }
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            if (failureBlock) {
+                failureBlock(error);
+                NSLog(@"error:%@",error);
+                if (![urlString containsString:@"shzq/appSecuCodeInterfaceAct/exitEditorEquipment.jhtml"]) {
+                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请重试！"];
+                }
+            }
+        }];
+
+
+    }
+
+}
++ (void)getWithUrlString:(NSString *)urlString
+               parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+                  success:(SuccessBlock)successBlock
+                  failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+{
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [WSProgressHUD dismiss];
+        [MJHttpManager cancelInternetManager];
+    });
+        [self GetWithUrlString:urlString parameters:parameters checkSession:checkSession session:sessionBlock success:successBlock failure:failureBlock callBackJSON:callBackJSON withAFMediaType:afMediaType];
+}
++(void)GetWithUrlString:(NSString *)urlString
+              parameters:(id)parameters checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+   failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+{
+    // 3.开始监控
+    [MJHttpManager shareManager].responseSerializer = [AFHTTPResponseSerializer serializer];
+    NSString* headerCookie = [UserDefaultsHelper readCookie];
+    NSLog(@"headerCookie:%@",headerCookie);
+    NSLog(@"urlString-------:%@",urlString);
+    if (checkSession) {
+        if(headerCookie!=nil&& headerCookie.length>0) {
+            [[MJHttpManager shareManager].requestSerializer setValue:headerCookie forHTTPHeaderField:@"Cookie"];
+
+        }
+    }else {
+        if (afMediaType) {
+            [MJHttpManager shareManager].requestSerializer = [AFJSONRequestSerializer serializer];
+            [MJHttpManager shareManager].responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+        }
+        NSLog(@"urlString:%@---parameters:%@",[NSString stringWithFormat:@"%@",urlString],parameters);
+        [[MJHttpManager shareManager] GET:[NSString stringWithFormat:@"%@",urlString] parameters:parameters progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            if (successBlock) {
+                if (callBackJSON) {
+                    successBlock([responseObject mj_JSONString]);
+                    NSLog(@"responseObjectDict:%@",[responseObject mj_JSONObject]);
+                    NSLog(@"responseObjectJSON:%@",[responseObject mj_JSONString]);
+                }else {
+                    NSLog(@"responseObject:%@",responseObject);
+                    successBlock(responseObject);
+                }
+
+            }
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            if (failureBlock) {
+                failureBlock(error);
+                NSLog(@"error:%@",error);
+                if (![urlString containsString:@"shzq/appSecuCodeInterfaceAct/exitEditorEquipment.jhtml"]) {
+                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"网络繁忙,请重试！"];
+                }
+            }
+        }];
+
+
+    }
+
+}
++ (void)postAFMultipartWithUrlString:(NSString *)urlString
+parameters:(id)parameters withFileData:(NSData *)fileData withFilePathType:(NSString *)filePathType mimeType:(NSString *)mimeType progress:(ProgressBlock)progress showMsg:(BOOL)showMsg checkSession:(BOOL)checkSession session:(SessionBlock)sessionBlock
+   success:(SuccessBlock)successBlock
+   failure:(FailureBlock)failureBlock callBackJSON:(BOOL)callBackJSON withAFMediaType:(BOOL )afMediaType
+{
+    [MJHttpManager shareManager].responseSerializer = [AFHTTPResponseSerializer serializer];
+    if (checkSession) {
+
+    }else {
+        if (afMediaType) {
+            [MJHttpManager shareManager].requestSerializer = [AFJSONRequestSerializer serializer];
+            [MJHttpManager shareManager].responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html",@"text/json", @"text/javascript", nil];
+        }
+        [[MJHttpManager shareManager] POST:[NSString stringWithFormat:@"%@",urlString] parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            formatter.dateFormat = @"yyyyMMddHHmmss";
+            NSString *outputPath = [NSHomeDirectory() stringByAppendingFormat:@"/Documents/%@", [[formatter stringFromDate:[NSDate date]] stringByAppendingString:filePathType]];
+            [formData appendPartWithFileData:fileData name:@"file" fileName:outputPath mimeType:mimeType];
+        } progress:^(NSProgress * _Nonnull uploadProgress) {
+            float update = uploadProgress.fractionCompleted*100;
+            if (progress) {
+                NSLog(@"update:%f",update);
+                progress(update);
+            }
+        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            if (successBlock) {
+                if (callBackJSON) {
+                    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    successBlock(dict);
+                    NSLog(@"MJHttpManagerDict:%@",dict);
+                    NSLog(@"json:%@",[responseObject mj_JSONString]);
+                }else {
+                    NSLog(@"responseObject:%@",responseObject);
+                    successBlock(responseObject);
+                }
+                if (showMsg) {
+                    [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传成功"];
+                }
+            }
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            if (failureBlock) {
+                failureBlock(error);
+                [WSProgressHUD showImage:[UIImage imageNamed:@""] status:@"上传失败,请重试..."];
+                NSLog(@"error:%@",error);
+                //            [WSProgressHUD dismiss];
+            }
+        }];
+
+
+    }
+
+}
 @end
 
 @implementation MJMutableAttributedString
@@ -1221,7 +1391,7 @@ static MJHttpManager *manager = nil;
 {
     for (id obj in scrollView.subviews) {
         if ([obj isKindOfClass:[UIImageView class]]) {
-            //XLog(@"obj:%@",obj);
+            //NSLog(@"obj:%@",obj);
             UIImageView *iv = (UIImageView *)obj;
             UILabel *label = (UILabel *)obj;
             if (iv.tag == 1000) {
@@ -1295,7 +1465,7 @@ static MJHttpManager *manager = nil;
     imagePickerVc.showSelectedIndex = YES;
 
     [imagePickerVc setDidFinishPickingPhotosHandle:^(NSArray<UIImage *> *photos, NSArray *assets, BOOL isSelectOriginalPhoto) {
-        //XLog(@"photos:%@---assets:%@",photos,assets);
+        //NSLog(@"photos:%@---assets:%@",photos,assets);
         self.image = photos[0];
         self.imageData = UIImageJPEGRepresentation(self.image, 0.6);
         //选择回调
@@ -1516,11 +1686,11 @@ static MJHttpManager *manager = nil;
     // 得到星期几
     // 1(星期天) 2(星期二) 3(星期三) 4(星期四) 5(星期五) 6(星期六) 7(星期天)
     NSInteger weekDay = [comp weekday];
-    ////XLog(@"weekDay:%ld",(long)weekDay);//5
+    ////NSLog(@"weekDay:%ld",(long)weekDay);//5
     // 得到几号
     NSInteger day = [comp day];
-    ////XLog(@"day:%ld",(long)day);//2
-    //    ////XLog(@"weekDay:%ld  day:%ld",weekDay,day);
+    ////NSLog(@"day:%ld",(long)day);//2
+    //    ////NSLog(@"weekDay:%ld  day:%ld",weekDay,day);
 
     // 计算当前日期和这周的星期一和星期天差的天数
     long firstDiff,lastDiff;
@@ -1543,15 +1713,15 @@ static MJHttpManager *manager = nil;
 
     NSDateFormatter *formater = [[NSDateFormatter alloc] init];
     [formater setDateFormat:@"yyyy-MM-dd"];
-    ////XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
+    ////NSLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
     NSString *sundayString = [NSString stringWithFormat:@"%@",[formater stringFromDate:firstDayOfWeek]];
     NSDate *lastDate = [formater dateFromString:sundayString];
     long firstStamp = [lastDate timeIntervalSince1970]*1000;
-    ////XLog(@"firstStamp:%ld",firstStamp);
-    ////XLog(@"当前 %@",[formater stringFromDate:now]);
-    ////XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
+    ////NSLog(@"firstStamp:%ld",firstStamp);
+    ////NSLog(@"当前 %@",[formater stringFromDate:now]);
+    ////NSLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
     NSString *timeStr = [NSString stringWithFormat:@"%ld",firstStamp];
-    ////XLog(@"timeStr:%@",timeStr);
+    ////NSLog(@"timeStr:%@",timeStr);
     return timeStr;
 }
 /*当前时间毫秒*/
@@ -1707,7 +1877,7 @@ static MJHttpManager *manager = nil;
     // 得到几号
     NSInteger day = [comp day];
 
-    //    ////XLog(@"weekDay:%ld  day:%ld",weekDay,day);
+    //    ////NSLog(@"weekDay:%ld  day:%ld",weekDay,day);
 
     // 计算当前日期和这周的星期一和星期天差的天数
     long firstDiff,lastDiff;
@@ -1730,13 +1900,13 @@ static MJHttpManager *manager = nil;
 
     NSDateFormatter *formater = [[NSDateFormatter alloc] init];
     [formater setDateFormat:@"yyyy-MM-dd"];
-    ////XLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
+    ////NSLog(@"一周开始 %@",[formater stringFromDate:firstDayOfWeek]);
     //    NSString *sundayString = [NSString stringWithFormat:@"%@",[formater stringFromDate:firstDayOfWeek]];
     //    NSDate *lastDate = [formater dateFromString:sundayString];
     //    long firstStamp = [lastDate timeIntervalSince1970]*1000;
-    ////XLog(@"firstStamp:%ld",firstStamp);
-    ////XLog(@"当前 %@",[formater stringFromDate:now]);
-    ////XLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
+    ////NSLog(@"firstStamp:%ld",firstStamp);
+    ////NSLog(@"当前 %@",[formater stringFromDate:now]);
+    ////NSLog(@"一周结束 %@",[formater stringFromDate:lastDayOfWeek]);
 
     /**
      2018-08-02 11:05:51.836838+0800 KamunShangCheng[916:169288] 一周开始 2018-07-29
@@ -1755,7 +1925,7 @@ static MJHttpManager *manager = nil;
     NSDate *dateA = [dateFormatter dateFromString:oneDayStr];
     NSDate *dateB = [dateFormatter dateFromString:anotherDayStr];
     NSComparisonResult result = [dateA compare:dateB];
-    ////XLog(@"oneDay : %@, anotherDay : %@", oneDay, anotherDay);
+    ////NSLog(@"oneDay : %@, anotherDay : %@", oneDay, anotherDay);
     /**
      //该方法用于排序时调用:
      . 当实例保存的日期值与anotherDate相同时返回NSOrderedSame
@@ -1764,19 +1934,19 @@ static MJHttpManager *manager = nil;
      */
     if (result == NSOrderedDescending) {
         //在指定时间前面 过了指定时间 过期
-        ////XLog(@"oneDay  is in the future");
+        ////NSLog(@"oneDay  is in the future");
         return 1;
     }
     else if (result == NSOrderedAscending){
         //没过指定时间 没过期
-        //////XLog(@"Date1 is in the past");
+        //////NSLog(@"Date1 is in the past");
         return -1;
     }else {
         return 0;
 
     }
     //刚好时间一样.
-    //////XLog(@"Both dates are the same");
+    //////NSLog(@"Both dates are the same");
 
 }
 
@@ -1843,10 +2013,10 @@ static MJHttpManager *manager = nil;
     NSTimeZone* timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
     [formatter setTimeZone:timeZone];
     NSDate *datenow = [NSDate date];//现在时间
-    //XLog(@"设备当前的时间:%@",[formatter stringFromDate:datenow]);
+    //NSLog(@"设备当前的时间:%@",[formatter stringFromDate:datenow]);
     //时间转时间戳的方法:
     NSInteger timeSp = [[NSNumber numberWithDouble:[datenow timeIntervalSince1970]] integerValue]*1000;
-    //XLog(@"设备当前的时间戳:%ld",(long)timeSp); //时间戳的值
+    //NSLog(@"设备当前的时间戳:%ld",(long)timeSp); //时间戳的值
 
     return timeSp;
 
@@ -1933,14 +2103,14 @@ static MJHttpManager *manager = nil;
 }
 +(void)clearUserDafault
 {
-    //XLog(@"id:%@",[UserDefaultsHelper readUserId]);
+    //NSLog(@"id:%@",[UserDefaultsHelper readUserId]);
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"headimg"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"sex"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"nickname"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"sign"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"userAccount"];
     [[UserDefaultsHelper userDefaultManager] removeObjectForKey:@"userId"];
-    //XLog(@"id:%@",[UserDefaultsHelper readUserId]);
+    //NSLog(@"id:%@",[UserDefaultsHelper readUserId]);
 }
 +(void)saveAutoLogIn:(id)autoLogIn value:(NSString *)autoLogInYESORNO
 {
@@ -2111,5 +2281,13 @@ static MJHttpManager *manager = nil;
 {
     NSString *qqOpenID = [[UserDefaultsHelper userDefaultManager] objectForKey:@"qqOpenID"];
     return qqOpenID;
+}
++(NSString *)readCookie
+{
+    return [[UserDefaultsHelper userDefaultManager] objectForKey:@"cookie"];
+}
++(void)savesCookie:(id)cookie value:(NSString *)cookie
+{
+    [[UserDefaultsHelper userDefaultManager] setValue:cookie forKey:@"cookie"];
 }
 @end

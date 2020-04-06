@@ -1090,7 +1090,6 @@ static CGFloat const WSProgressHUDImageTypeWidthEdgeOffset = 16;
 - (CAShapeLayer *)createRingLayerWithCenter:(CGPoint)center radius:(CGFloat)radius lineWidth:(CGFloat)lineWidth color:(UIColor *)color {
     
     UIBezierPath* smoothedPath = [UIBezierPath bezierPathWithArcCenter:CGPointMake(radius, radius) radius:radius startAngle:-M_PI_2 endAngle:(M_PI + M_PI_2) clockwise:YES];
-    
     CAShapeLayer *slice = [CAShapeLayer layer];
     slice.contentsScale = [[UIScreen mainScreen] scale];
     slice.frame = CGRectMake(center.x-radius, center.y-radius, radius*2, radius*2);
@@ -1100,7 +1099,6 @@ static CGFloat const WSProgressHUDImageTypeWidthEdgeOffset = 16;
     slice.lineCap = kCALineCapRound;
     slice.lineJoin = kCALineJoinBevel;
     slice.path = smoothedPath.CGPath;
-    
     return slice;
 }
 
@@ -1109,7 +1107,18 @@ static CGFloat const WSProgressHUDImageTypeWidthEdgeOffset = 16;
     if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
         return 32;
     } else {
-        return 64;
+        UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
+        if (@available(iOS 11.0, *)) {
+            if (window.safeAreaInsets.bottom > 0.0) {
+                NSLog(@"isIphoneX");
+                return 88;
+            } else {
+                NSLog(@"NotIsIphoneX");
+                return 64;
+            }
+        }else {
+            return 64;
+        }
     }
 }
 
