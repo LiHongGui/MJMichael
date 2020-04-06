@@ -1,6 +1,6 @@
 MJMichael 
 更新记录:
-v4.3.3
+v4.3.4
 1:修复WSProgressBundle.bundle
 v4.3.2
 1:添加AFNetworking
